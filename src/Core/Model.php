@@ -12,9 +12,9 @@ abstract class Model
     protected array $fillable = [];
     protected array $hidden = [];
     protected array $casts = [];
-    
-    private array $attributes = [];
-    private array $original = [];
+
+    protected array $attributes = [];
+    protected array $original = [];
     
     public function __construct(array $attributes = [])
     {
