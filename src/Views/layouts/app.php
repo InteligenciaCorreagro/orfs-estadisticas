@@ -2,6 +2,12 @@
 // src/Views/layouts/app.php
 $user = auth();
 $currentYear = date('Y');
+
+// Si no hay usuario autenticado, redirigir al login
+if (!$user) {
+    redirect('/login');
+    exit;
+}
 ?>
 <!DOCTYPE html>
 <html lang="es">
