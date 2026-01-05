@@ -1,0 +1,102 @@
+/* public/assets/css/components.css */
+
+/* Badge */
+.badge {
+    display: inline-block;
+    padding: 4px 8px;
+    font-size: 12px;
+    font-weight: 500;
+    border-radius: 4px;
+}
+
+.badge-primary {
+    background-color: #4472C4;
+    color: white;
+}
+
+.badge-success {
+    background-color: #70AD47;
+    color: white;
+}
+
+.badge-danger {
+    background-color: #E74C3C;
+    color: white;
+}
+
+.badge-warning {
+    background-color: #F39C12;
+    color: white;
+}
+
+.badge-secondary {
+    background-color: #95a5a6;
+    color: white;
+}
+
+/* Menu Section */
+.menu-section {
+    padding: 10px 20px;
+    font-size: 11px;
+    font-weight: bold;
+    color: #95a5a6;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    background-color: #f8f9fa;
+}
+
+.menu-section span {
+    display: block;
+}
+
+/* Page Header */
+.page-header h1 {
+    margin: 0;
+    font-size: 28px;
+    color: var(--dark-color);
+}
+
+.page-header p {
+    margin: 5px 0 0 0;
+    color: #95a5a6;
+}
+
+/* Row Grid */
+.row {
+    display: grid;
+    gap: 20px;
+}
+
+/* Button Block */
+.btn-block {
+    width: 100%;
+    display: block;
+}
+
+/* Text Utilities */
+.text-muted {
+    color: #95a5a6;
+}
+
+.text-success {
+    color: #70AD47;
+}
+
+.text-danger {
+    color: #E74C3C;
+}
+
+.text-warning {
+    color: #F39C12;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .d-flex {
+        flex-direction: column;
+    }
+    
+    .page-header h1 {
+        font-size: 24px;
+    }
+}

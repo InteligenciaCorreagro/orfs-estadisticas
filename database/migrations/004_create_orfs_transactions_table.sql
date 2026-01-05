@@ -1,0 +1,35 @@
+-- database/migrations/004_create_orfs_transactions_table.sql
+
+CREATE TABLE IF NOT EXISTS orfs_transactions (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    reasig VARCHAR(100) NULL,
+    nit VARCHAR(20) NOT NULL,
+    nombre VARCHAR(255) NOT NULL,
+    corredor VARCHAR(255) NOT NULL,
+    comi_porcentual DECIMAL(10,4) DEFAULT 0.0000,
+    ciudad VARCHAR(100) NULL,
+    fecha DATE NOT NULL,
+    rueda_no INT NOT NULL,
+    negociado DECIMAL(15,2) DEFAULT 0.00,
+    comi_bna DECIMAL(15,2) DEFAULT 0.00,
+    campo_209 DECIMAL(15,2) DEFAULT 0.00,
+    comi_corr DECIMAL(15,2) DEFAULT 0.00,
+    iva_bna DECIMAL(15,2) DEFAULT 0.00,
+    iva_comi DECIMAL(15,2) DEFAULT 0.00,
+    iva_cama DECIMAL(15,2) DEFAULT 0.00,
+    facturado DECIMAL(15,2) DEFAULT 0.00,
+    mes VARCHAR(20) NOT NULL,
+    comi_corr_neto DECIMAL(15,2) DEFAULT 0.00,
+    year INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    
+    INDEX idx_nit (nit),
+    INDEX idx_corredor (corredor),
+    INDEX idx_fecha (fecha),
+    INDEX idx_rueda_no (rueda_no),
+    INDEX idx_year (year),
+    INDEX idx_corredor_fecha (corredor, fecha),
+    INDEX idx_rueda_year (rueda_no, year),
+    INDEX idx_corredor_year_mes (corredor, year, mes)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
