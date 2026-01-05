@@ -79,11 +79,11 @@ class AuthController
 
         $result = $this->authService->login($email, $password);
 
-        // DEBUG: Ver qué está pasando
-        error_log("Login result: " . json_encode($result));
-
         if ($result['success']) {
-            // Login exitoso - SIEMPRE redirigir, sea AJAX o no
+            // Login exitoso - IMPORTANTE: Guardar sesión antes de redirigir
+            session_write_close();
+
+            // Redirigir al dashboard
             $response = new Response();
             $response->redirect('/dashboard');
         } else {

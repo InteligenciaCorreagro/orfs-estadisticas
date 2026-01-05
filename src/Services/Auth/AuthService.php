@@ -50,13 +50,6 @@ class AuthService
         Session::set('user_role', $user->role);
         Session::set('trader_name', $user->trader_name);
 
-        // DEBUG: Verificar que se guardó
-        error_log("Session after login: " . json_encode([
-            'user_id' => Session::get('user_id'),
-            'user_name' => Session::get('user_name'),
-            'user_role' => Session::get('user_role')
-        ]));
-
         // Registrar en auditoría
         AuditoriaLog::registrar(
             $user->id,
