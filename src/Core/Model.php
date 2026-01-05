@@ -7,7 +7,7 @@ use App\Core\Database;
 
 abstract class Model
 {
-    protected string $table;
+    protected string $table = '';
     protected string $primaryKey = 'id';
     protected array $fillable = [];
     protected array $hidden = [];
