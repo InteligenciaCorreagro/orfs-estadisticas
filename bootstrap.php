@@ -3,7 +3,7 @@
 
 // Configurar reporte de errores
 error_reporting(E_ALL);
-ini_set('display_errors', '0'); // CAMBIAR A 0 para no enviar output
+ini_set('display_errors', '1'); // Temporalmente activado para debug
 
 // Zona horaria
 date_default_timezone_set('America/Bogota');
