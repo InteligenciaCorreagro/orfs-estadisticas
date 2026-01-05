@@ -8,7 +8,7 @@ use App\Core\Database;
 
 class OrfsTransaction extends Model
 {
-    protected static string $table = 'orfs_transactions';
+    protected string $table = 'orfs_transactions';
     
     protected array $fillable = [
         'reasig',

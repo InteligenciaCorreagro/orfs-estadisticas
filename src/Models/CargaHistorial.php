@@ -8,7 +8,7 @@ use App\Core\Database;
 
 class CargaHistorial extends Model
 {
-    protected static string $table = 'carga_historial';
+    protected string $table = 'carga_historial';
     
     protected array $fillable = [
         'archivo_nombre',

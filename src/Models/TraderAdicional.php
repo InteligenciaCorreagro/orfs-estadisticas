@@ -7,7 +7,7 @@ use App\Core\Database;
 
 class TraderAdicional extends Model
 {
-    protected static string $table = 'trader_adicionales';
+    protected string $table = 'trader_adicionales';
     
     protected array $fillable = [
         'trader_id',

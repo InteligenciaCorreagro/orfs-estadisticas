@@ -8,8 +8,8 @@ use App\Core\Database;
 
 class AuditoriaLog extends Model
 {
-    protected static string $table = 'auditoria_logs';
-    
+    protected string $table = 'auditoria_logs';
+
     protected array $fillable = [
         'user_id',
         'accion',

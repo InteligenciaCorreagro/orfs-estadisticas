@@ -8,7 +8,7 @@ use App\Core\Database;
 
 class Trader extends Model
 {
-    protected static string $table = 'traders';
+    protected string $table = 'traders';
     
     protected array $fillable = [
         'nombre',

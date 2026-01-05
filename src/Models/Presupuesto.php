@@ -8,7 +8,7 @@ use App\Core\Database;
 
 class Presupuesto extends Model
 {
-    protected static string $table = 'presupuestos';
+    protected string $table = 'presupuestos';
     
     protected array $fillable = [
         'nit',
