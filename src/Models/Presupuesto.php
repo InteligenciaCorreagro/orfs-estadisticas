@@ -35,7 +35,18 @@ class Presupuesto extends Model
     {
         $sql = "SELECT * FROM presupuestos WHERE year = :year";
         $results = Database::fetchAll($sql, ['year' => $year]);
-        return array_map(fn($row) => new self($row), $results);
+        $models = [];
+        foreach ($results as $result) {
+            $model = new static();
+            foreach ($result as $key => $value) {
+                $model->attributes[$key] = $value;
+                $model->original[$key] = $value;
+            }
+            $model->castAttributes();
+            $models[] = $model;
+        }
+
+        return $models;
     }
     
     public static function porCorredor(string $corredor, ?int $year = null): array
@@ -49,7 +60,18 @@ class Presupuesto extends Model
         }
         
         $results = Database::fetchAll($sql, $params);
-        return array_map(fn($row) => new self($row), $results);
+        $models = [];
+        foreach ($results as $result) {
+            $model = new static();
+            foreach ($result as $key => $value) {
+                $model->attributes[$key] = $value;
+                $model->original[$key] = $value;
+            }
+            $model->castAttributes();
+            $models[] = $model;
+        }
+
+        return $models;
     }
     
     public static function obtener(string $corredor, string $nit, int $mes, int $year): ?self

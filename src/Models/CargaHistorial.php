@@ -37,21 +37,56 @@ class CargaHistorial extends Model
         $stmt->bindValue(':limit', $limit, \PDO::PARAM_INT);
         $stmt->execute();
         $results = $stmt->fetchAll();
-        
-        return array_map(fn($row) => new self($row), $results);
+
+        $models = [];
+        foreach ($results as $result) {
+            $model = new static();
+            foreach ($result as $key => $value) {
+                $model->attributes[$key] = $value;
+                $model->original[$key] = $value;
+            }
+            $model->castAttributes();
+            $models[] = $model;
+        }
+
+        return $models;
     }
-    
+
     public static function exitosos(): array
     {
         $sql = "SELECT * FROM carga_historial WHERE estado = 'exitoso' ORDER BY created_at DESC";
         $results = Database::fetchAll($sql);
-        return array_map(fn($row) => new self($row), $results);
+
+        $models = [];
+        foreach ($results as $result) {
+            $model = new static();
+            foreach ($result as $key => $value) {
+                $model->attributes[$key] = $value;
+                $model->original[$key] = $value;
+            }
+            $model->castAttributes();
+            $models[] = $model;
+        }
+
+        return $models;
     }
-    
+
     public static function fallidos(): array
     {
         $sql = "SELECT * FROM carga_historial WHERE estado = 'fallido' ORDER BY created_at DESC";
         $results = Database::fetchAll($sql);
-        return array_map(fn($row) => new self($row), $results);
+
+        $models = [];
+        foreach ($results as $result) {
+            $model = new static();
+            foreach ($result as $key => $value) {
+                $model->attributes[$key] = $value;
+                $model->original[$key] = $value;
+            }
+            $model->castAttributes();
+            $models[] = $model;
+        }
+
+        return $models;
     }
 }

@@ -76,7 +76,18 @@ class Trader extends Model
     {
         $sql = "SELECT * FROM traders WHERE activo = 1 ORDER BY nombre";
         $results = Database::fetchAll($sql);
-        return array_map(fn($row) => new self($row), $results);
+        $models = [];
+        foreach ($results as $result) {
+            $model = new static();
+            foreach ($result as $key => $value) {
+                $model->attributes[$key] = $value;
+                $model->original[$key] = $value;
+            }
+            $model->castAttributes();
+            $models[] = $model;
+        }
+
+        return $models;
     }
     
     public static function buscarPorNombreONit(string $termino): ?self
