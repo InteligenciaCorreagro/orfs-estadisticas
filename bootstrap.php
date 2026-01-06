@@ -37,19 +37,17 @@ set_error_handler(function($errno, $errstr, $errfile, $errline) {
 });
 
 set_exception_handler(function($exception) {
-    $message = "Exception: " . $exception->getMessage() . " en " . 
+    $message = "Exception: " . $exception->getMessage() . " en " .
                $exception->getFile() . ":" . $exception->getLine();
     error_log($message);
-    
-    if ($_ENV['APP_DEBUG'] === 'true') {
-        // Solo en debug y cuando no haya sesión activa
-        if (session_status() === PHP_SESSION_NONE) {
-            echo "<pre>";
-            echo $message . "\n\n";
-            echo "Stack trace:\n";
-            echo $exception->getTraceAsString();
-            echo "</pre>";
-        }
+
+    // SIEMPRE mostrar errores si APP_DEBUG es true
+    if (isset($_ENV['APP_DEBUG']) && $_ENV['APP_DEBUG'] === 'true') {
+        echo "<pre>";
+        echo $message . "\n\n";
+        echo "Stack trace:\n";
+        echo $exception->getTraceAsString();
+        echo "</pre>";
     } else {
         http_response_code(500);
         echo "Error interno del servidor";
