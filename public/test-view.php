@@ -3,14 +3,14 @@
 error_reporting(E_ALL);
 ini_set('display_errors', '1');
 
+require_once __DIR__ . '/../bootstrap.php';
+
+use App\Core\Session;
+use App\Models\CargaHistorial;
+
 echo "<h1>Testing View Rendering</h1>";
 
 try {
-    require_once __DIR__ . '/../bootstrap.php';
-
-    use App\Core\Session;
-    use App\Models\CargaHistorial;
-
     echo "<p>Bootstrap loaded</p>";
 
     Session::start();
