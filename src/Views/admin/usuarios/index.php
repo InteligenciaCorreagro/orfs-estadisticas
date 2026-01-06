@@ -283,4 +283,4 @@ async function deleteUser(id, nombre) {
 JS;
 
 $content = ob_get_clean();
-require __DIR__ . '/../layouts/app.php';
+require __DIR__ . '/../../layouts/app.php';

@@ -112,21 +112,12 @@ abstract class Model
     {
         $fillableData = array_intersect_key($this->attributes, array_flip($this->fillable));
         
-        $columns = array_keys($fillableData);
-        $values = array_values($fillableData);
+        if (empty($fillableData)) {
+            return false;
+        }
         
-        $placeholders = array_map(fn($col) => ":$col", $columns);
-        
-        $sql = sprintf(
-            "INSERT INTO %s (%s) VALUES (%s)",
-            $this->table,
-            implode(', ', $columns),
-            implode(', ', $placeholders)
-        );
-        
-        $params = array_combine($columns, $values);
-        
-        $id = Database::insert($sql, $params);
+        // Usar helper de Database con firma (tabla, data)
+        $id = Database::insert($this->table, $fillableData);
         
         if ($id) {
             $this->attributes[$this->primaryKey] = $id;
@@ -141,22 +132,19 @@ abstract class Model
     {
         $fillableData = array_intersect_key($this->attributes, array_flip($this->fillable));
         
-        $setParts = [];
-        foreach (array_keys($fillableData) as $column) {
-            $setParts[] = "$column = :$column";
+        if (empty($fillableData)) {
+            return false;
         }
-        
-        $sql = sprintf(
-            "UPDATE %s SET %s WHERE %s = :primary_key_value",
+
+        // Usar firma (tabla, data, where, whereParams)
+        $affected = Database::update(
             $this->table,
-            implode(', ', $setParts),
-            $this->primaryKey
+            $fillableData,
+            "{$this->primaryKey} = :primary_key_value",
+            ['primary_key_value' => $this->attributes[$this->primaryKey]]
         );
         
-        $params = $fillableData;
-        $params['primary_key_value'] = $this->attributes[$this->primaryKey];
-        
-        return Database::update($sql, $params);
+        return $affected > 0;
     }
     
     public function delete(): bool
@@ -165,9 +153,13 @@ abstract class Model
             return false;
         }
         
-        $sql = "DELETE FROM {$this->table} WHERE {$this->primaryKey} = :id";
+        $deleted = Database::delete(
+            $this->table,
+            "{$this->primaryKey} = :id",
+            ['id' => $this->attributes[$this->primaryKey]]
+        );
         
-        return Database::delete($sql, ['id' => $this->attributes[$this->primaryKey]]);
+        return $deleted > 0;
     }
     
     protected function castAttributes(): void

@@ -103,7 +103,8 @@ function baseUrl(string $path = ''): string
  */
 function asset(string $path): string
 {
-    return baseUrl('public/assets/' . ltrim($path, '/'));
+    // Servir assets directamente desde la carpeta public/assets respetando APP_URL
+    return baseUrl('assets/' . ltrim($path, '/'));
 }
 /**
  * Redirigir

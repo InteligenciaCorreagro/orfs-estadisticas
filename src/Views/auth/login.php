@@ -3,7 +3,7 @@
 ob_start();
 ?>
 
-<div class="auth-logo">📊</div>
+<div class="auth-logo">ORFS</div>
 <h1 class="auth-title">ORFS Estadísticas</h1>
 
 <?php if (isset($flashError)): ?>

@@ -40,8 +40,14 @@ class AuditoriaLog extends Model
         ?array $datosAnteriores = null,
         ?array $datosNuevos = null
     ): void {
+        // Evitar fallo de FK si el usuario ya no existe
+        $resolvedUserId = $userId;
+        if ($resolvedUserId !== null && !User::find($resolvedUserId)) {
+            $resolvedUserId = null;
+        }
+
         $data = [
-            'user_id' => $userId,
+            'user_id' => $resolvedUserId,
             'accion' => $accion,
             'modulo' => $modulo,
             'descripcion' => $descripcion,
@@ -53,7 +59,11 @@ class AuditoriaLog extends Model
             'updated_at' => date('Y-m-d H:i:s')
         ];
         
-        Database::insert('auditoria_logs', $data);
+        try {
+            Database::insert('auditoria_logs', $data);
+        } catch (\PDOException $e) {
+            error_log('Error al registrar auditoria: ' . $e->getMessage());
+        }
     }
     
     public static function porUsuario(int $userId, int $limit = 50): array

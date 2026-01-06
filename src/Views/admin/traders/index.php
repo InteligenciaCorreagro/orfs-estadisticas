@@ -108,4 +108,5 @@ async function deleteTrader(id, nombre) {
 JS;
 
 $content = ob_get_clean();
-require __DIR__ . '/../layouts/app.php';
+// Subir dos niveles para llegar a src/Views/layouts/app.php
+require __DIR__ . '/../../layouts/app.php';

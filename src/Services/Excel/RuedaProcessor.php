@@ -112,7 +112,23 @@ class RuedaProcessor
             // Procesar y guardar registro
             $registro = $this->procesarRegistro($row);
             
-            Database::insert('orfs_transactions', $registro);
+            try {
+                Database::insert('orfs_transactions', $registro);
+            } catch (\PDOException $e) {
+                $detalle = [
+                    'mensaje' => $e->getMessage(),
+                    'keys' => array_keys($registro),
+                    'registro' => $registro
+                ];
+                // Registrar el contenido problemático para depuración
+                if (function_exists('logError')) {
+                    logError('Error insertando orfs_transactions', $detalle);
+                } else {
+                    error_log('Error insertando orfs_transactions: ' . json_encode($detalle));
+                }
+                // Incluir el detalle en la respuesta para depurar sin logs
+                throw new Exception(json_encode($detalle));
+            }
             $registrosInsertados++;
         }
         

@@ -149,4 +149,4 @@ document.getElementById('traderForm').addEventListener('submit', async function(
 JS;
 
 $content = ob_get_clean();
-require __DIR__ . '/../layouts/app.php';
+require __DIR__ . '/../../layouts/app.php';

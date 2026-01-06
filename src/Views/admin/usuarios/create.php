@@ -137,4 +137,4 @@ document.getElementById('userForm').addEventListener('submit', async function(e)
 JS;
 
 $content = ob_get_clean();
-require __DIR__ . '/../layouts/app.php';
+require __DIR__ . '/../../layouts/app.php';

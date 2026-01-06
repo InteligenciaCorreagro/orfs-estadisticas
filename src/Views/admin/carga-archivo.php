@@ -31,7 +31,7 @@ $pageTitle = 'Cargar Archivo';
             </div>
             
             <button type="submit" class="btn btn-primary" id="btnUpload">
-                📤 Cargar y Procesar
+                Cargar y Procesar
             </button>
         </form>
         
@@ -60,17 +60,15 @@ document.addEventListener('DOMContentLoaded', function() {
     const btnUpload = document.getElementById('btnUpload');
     const uploadResult = document.getElementById('uploadResult');
     
-    // Cargar historial
     loadHistorial();
     
-    // Manejar upload
     uploadForm.addEventListener('submit', async function(e) {
         e.preventDefault();
         
         const formData = new FormData(uploadForm);
         
         btnUpload.disabled = true;
-        btnUpload.innerHTML = '⏳ Procesando...';
+        btnUpload.innerHTML = 'Procesando...';
         uploadResult.style.display = 'none';
         
         try {
@@ -87,7 +85,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (data.success) {
                 uploadResult.className = 'alert alert-success';
                 uploadResult.innerHTML = `
-                    <h4>✓ ${data.message}</h4>
+                    <h4>${data.message}</h4>
                     <ul>
                         <li>Ruedas procesadas: ${data.data.resultado.ruedas_procesadas.length}</li>
                         <li>Total registros: ${data.data.resultado.total_registros}</li>
@@ -98,18 +96,18 @@ document.addEventListener('DOMContentLoaded', function() {
                 loadHistorial();
             } else {
                 uploadResult.className = 'alert alert-danger';
-                uploadResult.innerHTML = `<strong>✗ Error:</strong> ${data.message}`;
+                uploadResult.innerHTML = `<strong>Error:</strong> ${data.message}`;
             }
             
             uploadResult.style.display = 'block';
             
         } catch (error) {
             uploadResult.className = 'alert alert-danger';
-            uploadResult.innerHTML = `<strong>✗ Error:</strong> ${error.message}`;
+            uploadResult.innerHTML = `<strong>Error:</strong> ${error.message}`;
             uploadResult.style.display = 'block';
         } finally {
             btnUpload.disabled = false;
-            btnUpload.innerHTML = '📤 Cargar y Procesar';
+            btnUpload.innerHTML = 'Cargar y Procesar';
         }
     });
     
