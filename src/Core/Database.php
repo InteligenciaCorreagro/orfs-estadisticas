@@ -70,9 +70,25 @@ class Database
         $cleanData = [];
         foreach ($data as $key => $value) {
             // Solo incluir claves válidas (no vacías, no numéricas)
-            if (is_string($key) && $key !== '' && !is_numeric($key)) {
-                $cleanData[$key] = $value;
+            if (!is_string($key) || $key === '' || is_numeric($key)) {
+                continue;
             }
+
+            // Validar que el valor sea un tipo escalar o null
+            if (!is_scalar($value) && !is_null($value)) {
+                throw new \Exception(
+                    "Valor inválido para la columna '{$key}' en tabla {$table}: " .
+                    "se esperaba escalar o null, se recibió " . gettype($value)
+                );
+            }
+
+            // Sanitizar nombre de columna (solo alfanuméricos y guion bajo)
+            $sanitizedKey = preg_replace('/[^a-zA-Z0-9_]/', '', $key);
+            if ($sanitizedKey !== $key) {
+                error_log("Columna renombrada: '{$key}' => '{$sanitizedKey}'");
+            }
+
+            $cleanData[$sanitizedKey] = $value;
         }
 
         if (empty($cleanData)) {
@@ -84,13 +100,24 @@ class Database
 
         $sql = "INSERT INTO {$table} ({$columns}) VALUES ({$placeholders})";
 
-        // Debug (remover en producción)
-        error_log("SQL INSERT: " . $sql);
-        error_log("PARAMS: " . json_encode($cleanData));
+        // Debug mejorado
+        if ($_ENV['APP_DEBUG'] ?? false) {
+            error_log("SQL INSERT: " . $sql);
+            error_log("PARAMS: " . json_encode($cleanData, JSON_UNESCAPED_UNICODE));
+        }
 
-        self::query($sql, $cleanData);
-
-        return (int) self::getInstance()->lastInsertId();
+        try {
+            $stmt = self::query($sql, $cleanData);
+            return (int) self::getInstance()->lastInsertId();
+        } catch (\PDOException $e) {
+            // Log detallado del error
+            error_log("ERROR EN INSERT:");
+            error_log("  SQL: " . $sql);
+            error_log("  Params: " . json_encode($cleanData, JSON_UNESCAPED_UNICODE));
+            error_log("  PDO Error: " . $e->getMessage());
+            error_log("  Error Code: " . $e->getCode());
+            throw $e;
+        }
     }
     public static function update(string $table, array $data, string $where, array $whereParams = []): int
     {

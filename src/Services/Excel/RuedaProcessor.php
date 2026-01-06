@@ -120,27 +120,29 @@ class RuedaProcessor
             try {
                 $registro = $this->procesarRegistro($row);
 
-                // VALIDAR que no haya claves vacías
-                $registroLimpio = array_filter(
-                    $registro,
-                    function ($key) {
-                        return is_string($key) && $key !== '' && !is_numeric($key);
-                    },
-                    ARRAY_FILTER_USE_KEY
-                );
-
-                // INSERTAR usando Database directamente con mejor control
-                $id = Database::insert('orfs_transactions', $registroLimpio);
+                // INSERTAR en la base de datos
+                // Database::insert() ya se encarga de validar y limpiar los datos
+                $id = Database::insert('orfs_transactions', $registro);
                 $registrosInsertados++;
             } catch (\PDOException $e) {
                 // Log detallado del error
-                error_log("Error insertando registro de rueda {$ruedaNo}:");
+                error_log("Error PDO insertando registro de rueda {$ruedaNo}:");
                 error_log("  - Mensaje: " . $e->getMessage());
-                error_log("  - Datos: " . json_encode($row));
+                error_log("  - Código: " . $e->getCode());
+                error_log("  - Datos del Excel: " . json_encode($row, JSON_UNESCAPED_UNICODE));
 
                 // Re-lanzar con contexto
                 throw new \Exception(
                     "Error insertando registro de rueda {$ruedaNo}: " . $e->getMessage()
+                );
+            } catch (\Exception $e) {
+                // Log de otros errores (validación, tipos, etc.)
+                error_log("Error al procesar registro de rueda {$ruedaNo}:");
+                error_log("  - Mensaje: " . $e->getMessage());
+                error_log("  - Datos: " . json_encode($row, JSON_UNESCAPED_UNICODE));
+
+                throw new \Exception(
+                    "Error procesando registro de rueda {$ruedaNo}: " . $e->getMessage()
                 );
             }
         }
@@ -150,8 +152,25 @@ class RuedaProcessor
 
     private function procesarRegistro(array $row): array
     {
-        $nit = trim($row['ncodigo'] ?? '');
-        $nombreTrader = trim($row['nomtrader'] ?? '');
+        // Convertir todos los valores a string primero para evitar problemas con objetos RichText
+        $row = array_map(function ($value) {
+            if (is_null($value)) {
+                return '';
+            }
+            if (is_object($value)) {
+                if (method_exists($value, 'getPlainText')) {
+                    return trim($value->getPlainText());
+                }
+                if (method_exists($value, '__toString')) {
+                    return trim((string) $value);
+                }
+                return '';
+            }
+            return trim((string) $value);
+        }, $row);
+
+        $nit = $row['ncodigo'] ?? '';
+        $nombreTrader = $row['nomtrader'] ?? '';
         $gtotal = (float) ($row['gtotal'] ?? 0);
 
         // Validar campos requeridos
@@ -166,32 +185,31 @@ class RuedaProcessor
         $comisionCorr = $gtotal * ($porcentajeComision / 100);
 
         // Parsear fecha
-        $fecha = $this->parsearFecha($row['fecha']);
+        $fecha = $this->parsearFecha($row['fecha'] ?? '');
 
         // Obtener nombre del mes
         $nombreMes = $this->meses[(int)$fecha->format('n')];
 
-        // IMPORTANTE: NO incluir created_at ni updated_at
-        // La tabla los maneja automáticamente con DEFAULT CURRENT_TIMESTAMP
+        // IMPORTANTE: Todos los valores deben ser tipos escalares (string, int, float, null)
         return [
             'reasig' => null,
-            'nit' => $nit,
-            'nombre' => trim($row['nnombre'] ?? ''),
-            'corredor' => $nombreTrader,
+            'nit' => (string) $nit,
+            'nombre' => (string) ($row['nnombre'] ?? ''),
+            'corredor' => (string) $nombreTrader,
             'comi_porcentual' => (float) ($row['comi_porce'] ?? 0),
-            'ciudad' => trim($row['nomzona'] ?? ''),
+            'ciudad' => (string) ($row['nomzona'] ?? ''),
             'fecha' => $fecha->format('Y-m-d'),
-            'rueda_no' => (int) $row['rueda_no'],
-            'negociado' => $gtotal,
+            'rueda_no' => (int) ($row['rueda_no'] ?? 0),
+            'negociado' => (float) $gtotal,
             'comi_bna' => 0.0,
             'campo_209' => 0.0,
-            'comi_corr' => $comisionCorr,
+            'comi_corr' => (float) $comisionCorr,
             'iva_bna' => 0.0,
             'iva_comi' => 0.0,
             'iva_cama' => 0.0,
             'facturado' => 0.0,
-            'mes' => $nombreMes,
-            'comi_corr_neto' => $comisionCorr,
+            'mes' => (string) $nombreMes,
+            'comi_corr_neto' => (float) $comisionCorr,
             'year' => (int) $fecha->format('Y')
         ];
     }
