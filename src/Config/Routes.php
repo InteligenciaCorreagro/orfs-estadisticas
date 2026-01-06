@@ -3,12 +3,15 @@
 namespace App\Config;
 
 use App\Core\Router;
+use App\Core\Session;
+use App\Core\Response;
 use App\Middleware\AuthMiddleware;
 use App\Middleware\RoleMiddleware;
 
 // Controladores
 use App\Controllers\AuthController;
 use App\Controllers\Admin\DashboardController;
+use App\Controllers\Admin\DebugController;
 use App\Controllers\Admin\CargaArchivoController;
 use App\Controllers\Admin\TraderController;
 use App\Controllers\Admin\UsuarioController;
@@ -38,7 +41,19 @@ class Routes
         
         // Dashboard
         Router::get('/dashboard', [DashboardController::class, 'index'], [AuthMiddleware::class]);
-        
+
+        // RUTA DE TEST
+        Router::get('/test', function() {
+            Session::start();
+            ob_start();
+            require __DIR__ . '/../Views/admin/test.php';
+            $content = ob_get_clean();
+            (new Response())->html($content);
+        }, [AuthMiddleware::class]);
+
+        // RUTA DE DEBUG
+        Router::get('/debug', [DebugController::class, 'test'], [AuthMiddleware::class]);
+
         // ==================== RUTAS ADMIN ====================
         
         $adminMiddleware = [AuthMiddleware::class, new RoleMiddleware(['admin'])];

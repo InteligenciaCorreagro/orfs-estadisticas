@@ -34,21 +34,21 @@ class User extends Model
     {
         $sql = "SELECT * FROM users WHERE email = :email LIMIT 1";
         $result = Database::fetch($sql, ['email' => $email]);
-        
+
         if (!$result) {
             return null;
         }
-        
+
         $user = new self();
-        
+
         // CRÍTICO: Cargar TODOS los atributos incluyendo id
         foreach ($result as $key => $value) {
             $user->attributes[$key] = $value;
             $user->original[$key] = $value;
         }
-        
+
         $user->castAttributes();
-        
+
         return $user;
     }
     

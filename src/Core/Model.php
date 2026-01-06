@@ -7,14 +7,14 @@ use App\Core\Database;
 
 abstract class Model
 {
-    protected string $table;
+    protected string $table = '';
     protected string $primaryKey = 'id';
     protected array $fillable = [];
     protected array $hidden = [];
     protected array $casts = [];
-    
-    private array $attributes = [];
-    private array $original = [];
+
+    protected array $attributes = [];
+    protected array $original = [];
     
     public function __construct(array $attributes = [])
     {
@@ -176,19 +176,44 @@ abstract class Model
             if (!isset($this->attributes[$key])) {
                 continue;
             }
-            
+
             $value = $this->attributes[$key];
-            
+
             $this->attributes[$key] = match($type) {
                 'int', 'integer' => (int) $value,
                 'float', 'double' => (float) $value,
-                'bool', 'boolean' => (bool) $value,
+                'bool', 'boolean' => $this->castToBoolean($value),
                 'string' => (string) $value,
                 'array', 'json' => is_string($value) ? json_decode($value, true) : $value,
                 'datetime' => $value,
                 default => $value
             };
         }
+    }
+
+    /**
+     * Convierte un valor a booleano de manera robusta
+     */
+    private function castToBoolean($value): bool
+    {
+        // Si ya es booleano, devolverlo
+        if (is_bool($value)) {
+            return $value;
+        }
+
+        // Si es numérico (incluyendo strings numéricos)
+        if (is_numeric($value)) {
+            return (int) $value !== 0;
+        }
+
+        // Para strings, considerar casos comunes
+        if (is_string($value)) {
+            $lower = strtolower(trim($value));
+            return !in_array($lower, ['', '0', 'false', 'no', 'off', 'null'], true);
+        }
+
+        // Para NULL o cualquier otro valor falsy
+        return !empty($value);
     }
     
     public function toArray(): array

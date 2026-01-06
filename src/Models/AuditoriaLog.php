@@ -8,8 +8,8 @@ use App\Core\Database;
 
 class AuditoriaLog extends Model
 {
-    protected static string $table = 'auditoria_logs';
-    
+    protected string $table = 'auditoria_logs';
+
     protected array $fillable = [
         'user_id',
         'accion',
@@ -66,7 +66,18 @@ class AuditoriaLog extends Model
         $stmt->execute();
         $results = $stmt->fetchAll();
         
-        return array_map(fn($row) => new self($row), $results);
+        $models = [];
+        foreach ($results as $result) {
+            $model = new static();
+            foreach ($result as $key => $value) {
+                $model->attributes[$key] = $value;
+                $model->original[$key] = $value;
+            }
+            $model->castAttributes();
+            $models[] = $model;
+        }
+
+        return $models;
     }
     
     public static function recientes(int $limit = 100): array
@@ -77,6 +88,17 @@ class AuditoriaLog extends Model
         $stmt->execute();
         $results = $stmt->fetchAll();
         
-        return array_map(fn($row) => new self($row), $results);
+        $models = [];
+        foreach ($results as $result) {
+            $model = new static();
+            foreach ($result as $key => $value) {
+                $model->attributes[$key] = $value;
+                $model->original[$key] = $value;
+            }
+            $model->castAttributes();
+            $models[] = $model;
+        }
+
+        return $models;
     }
 }

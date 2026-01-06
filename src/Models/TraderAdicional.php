@@ -7,7 +7,7 @@ use App\Core\Database;
 
 class TraderAdicional extends Model
 {
-    protected static string $table = 'trader_adicionales';
+    protected string $table = 'trader_adicionales';
     
     protected array $fillable = [
         'trader_id',
@@ -27,6 +27,17 @@ class TraderAdicional extends Model
     {
         $sql = "SELECT * FROM trader_adicionales WHERE trader_id = :trader_id";
         $results = Database::fetchAll($sql, ['trader_id' => $traderId]);
-        return array_map(fn($row) => new self($row), $results);
+        $models = [];
+        foreach ($results as $result) {
+            $model = new static();
+            foreach ($result as $key => $value) {
+                $model->attributes[$key] = $value;
+                $model->original[$key] = $value;
+            }
+            $model->castAttributes();
+            $models[] = $model;
+        }
+
+        return $models;
     }
 }

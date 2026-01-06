@@ -8,7 +8,7 @@ use App\Core\Database;
 
 class OrfsTransaction extends Model
 {
-    protected static string $table = 'orfs_transactions';
+    protected string $table = 'orfs_transactions';
     
     protected array $fillable = [
         'reasig',
@@ -67,7 +67,18 @@ class OrfsTransaction extends Model
     {
         $sql = "SELECT * FROM orfs_transactions WHERE year = :year";
         $results = Database::fetchAll($sql, ['year' => $year]);
-        return array_map(fn($row) => new self($row), $results);
+        $models = [];
+        foreach ($results as $result) {
+            $model = new static();
+            foreach ($result as $key => $value) {
+                $model->attributes[$key] = $value;
+                $model->original[$key] = $value;
+            }
+            $model->castAttributes();
+            $models[] = $model;
+        }
+
+        return $models;
     }
     
     public static function porCorredor(string $corredor, ?int $year = null): array
@@ -81,7 +92,18 @@ class OrfsTransaction extends Model
         }
         
         $results = Database::fetchAll($sql, $params);
-        return array_map(fn($row) => new self($row), $results);
+        $models = [];
+        foreach ($results as $result) {
+            $model = new static();
+            foreach ($result as $key => $value) {
+                $model->attributes[$key] = $value;
+                $model->original[$key] = $value;
+            }
+            $model->castAttributes();
+            $models[] = $model;
+        }
+
+        return $models;
     }
     
     public static function porRueda(int $rueda, ?int $year = null): array
@@ -95,14 +117,36 @@ class OrfsTransaction extends Model
         }
         
         $results = Database::fetchAll($sql, $params);
-        return array_map(fn($row) => new self($row), $results);
+        $models = [];
+        foreach ($results as $result) {
+            $model = new static();
+            foreach ($result as $key => $value) {
+                $model->attributes[$key] = $value;
+                $model->original[$key] = $value;
+            }
+            $model->castAttributes();
+            $models[] = $model;
+        }
+
+        return $models;
     }
     
     public static function porMes(string $mes, int $year): array
     {
         $sql = "SELECT * FROM orfs_transactions WHERE mes = :mes AND year = :year";
         $results = Database::fetchAll($sql, ['mes' => $mes, 'year' => $year]);
-        return array_map(fn($row) => new self($row), $results);
+        $models = [];
+        foreach ($results as $result) {
+            $model = new static();
+            foreach ($result as $key => $value) {
+                $model->attributes[$key] = $value;
+                $model->original[$key] = $value;
+            }
+            $model->castAttributes();
+            $models[] = $model;
+        }
+
+        return $models;
     }
     
     public static function eliminarPorRueda(int $rueda): int
