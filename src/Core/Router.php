@@ -58,7 +58,9 @@ class Router
                 $params = array_filter($matches, 'is_string', ARRAY_FILTER_USE_KEY);
                 
                 foreach ($route['middlewares'] as $middleware) {
-                    $middlewareInstance = new $middleware();
+                    // Si ya es una instancia, usarla directamente
+                    // Si es un string (nombre de clase), instanciarla
+                    $middlewareInstance = is_object($middleware) ? $middleware : new $middleware();
                     $middlewareInstance->handle($request);
                 }
                 
