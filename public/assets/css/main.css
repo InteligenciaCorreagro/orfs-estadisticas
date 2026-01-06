@@ -134,12 +134,24 @@ body {
 .sidebar-menu a {
     display: flex;
     align-items: center;
+    gap: 12px;
     padding: 12px 20px;
     color: var(--text-color);
     text-decoration: none;
     transition: all 0.3s ease;
     border-left: 3px solid transparent;
     font-weight: 500;
+}
+
+.sidebar-menu a i {
+    width: 20px;
+    text-align: center;
+    font-size: 16px;
+}
+
+.sidebar-menu .menu-section i {
+    margin-right: 6px;
+    font-size: 12px;
 }
 
 .sidebar-menu a:hover {
@@ -327,6 +339,9 @@ body {
     width: 100%;
     border-collapse: collapse;
     background-color: white;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
 }
 
 .table thead {
@@ -335,26 +350,36 @@ body {
 }
 
 .table th {
-    padding: 15px 12px;
+    padding: 16px 14px;
     text-align: left;
     font-weight: 600;
-    font-size: 13px;
+    font-size: 12px;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.8px;
+    white-space: nowrap;
+    border-bottom: 2px solid rgba(255,255,255,0.2);
+}
+
+.table th i {
+    margin-right: 6px;
+    opacity: 0.9;
 }
 
 .table td {
-    padding: 14px 12px;
+    padding: 14px;
     text-align: left;
     border-bottom: 1px solid #F0F0F0;
+    font-size: 13px;
 }
 
 .table tbody tr {
-    transition: background-color 0.2s ease;
+    transition: all 0.2s ease;
 }
 
 .table tbody tr:hover {
     background-color: #F8FBF9;
+    transform: scale(1.001);
+    box-shadow: 0 2px 4px rgba(39, 174, 96, 0.08);
 }
 
 .table-striped tbody tr:nth-child(even) {
@@ -363,6 +388,44 @@ body {
 
 .table-striped tbody tr:nth-child(even):hover {
     background-color: #F8FBF9;
+}
+
+/* Tabla mejorada con bordes redondeados */
+.table-wrapper {
+    overflow-x: auto;
+    border-radius: 12px;
+    box-shadow: var(--shadow-sm);
+    background: white;
+}
+
+.table-wrapper::-webkit-scrollbar {
+    height: 8px;
+}
+
+.table-wrapper::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+.table-wrapper::-webkit-scrollbar-thumb {
+    background: var(--primary-color);
+    border-radius: 4px;
+}
+
+.table-wrapper::-webkit-scrollbar-thumb:hover {
+    background: var(--primary-dark);
+}
+
+/* Celdas numéricas alineadas a la derecha */
+.table td.text-right,
+.table th.text-right {
+    text-align: right;
+}
+
+/* Celdas con badges */
+.table td .badge {
+    font-size: 10px;
+    padding: 4px 10px;
 }
 
 /* Badges - Etiquetas Modernas */
