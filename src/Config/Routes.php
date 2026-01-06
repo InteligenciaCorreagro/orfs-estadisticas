@@ -11,6 +11,7 @@ use App\Middleware\RoleMiddleware;
 // Controladores
 use App\Controllers\AuthController;
 use App\Controllers\Admin\DashboardController;
+use App\Controllers\Admin\DebugController;
 use App\Controllers\Admin\CargaArchivoController;
 use App\Controllers\Admin\TraderController;
 use App\Controllers\Admin\UsuarioController;
@@ -49,6 +50,9 @@ class Routes
             $content = ob_get_clean();
             (new Response())->html($content);
         }, [AuthMiddleware::class]);
+
+        // RUTA DE DEBUG
+        Router::get('/debug', [DebugController::class, 'test'], [AuthMiddleware::class]);
 
         // ==================== RUTAS ADMIN ====================
         
