@@ -152,26 +152,29 @@ class RuedaProcessor
 
     private function procesarRegistro(array $row): array
     {
-        // Convertir todos los valores a string primero para evitar problemas con objetos RichText
-        $row = array_map(function ($value) {
+        // Convertir todos los valores a string, PRESERVANDO LAS CLAVES
+        // IMPORTANTE: array_map() NO preserva claves, por eso usamos foreach
+        $cleanRow = [];
+        foreach ($row as $key => $value) {
             if (is_null($value)) {
-                return '';
-            }
-            if (is_object($value)) {
+                $cleanRow[$key] = '';
+            } elseif (is_object($value)) {
+                // Manejar objetos RichText de PhpSpreadsheet
                 if (method_exists($value, 'getPlainText')) {
-                    return trim($value->getPlainText());
+                    $cleanRow[$key] = trim($value->getPlainText());
+                } elseif (method_exists($value, '__toString')) {
+                    $cleanRow[$key] = trim((string) $value);
+                } else {
+                    $cleanRow[$key] = '';
                 }
-                if (method_exists($value, '__toString')) {
-                    return trim((string) $value);
-                }
-                return '';
+            } else {
+                $cleanRow[$key] = trim((string) $value);
             }
-            return trim((string) $value);
-        }, $row);
+        }
 
-        $nit = $row['ncodigo'] ?? '';
-        $nombreTrader = $row['nomtrader'] ?? '';
-        $gtotal = (float) ($row['gtotal'] ?? 0);
+        $nit = $cleanRow['ncodigo'] ?? '';
+        $nombreTrader = $cleanRow['nomtrader'] ?? '';
+        $gtotal = (float) ($cleanRow['gtotal'] ?? 0);
 
         // Validar campos requeridos
         if (empty($nit) || empty($nombreTrader)) {
@@ -185,7 +188,7 @@ class RuedaProcessor
         $comisionCorr = $gtotal * ($porcentajeComision / 100);
 
         // Parsear fecha
-        $fecha = $this->parsearFecha($row['fecha'] ?? '');
+        $fecha = $this->parsearFecha($cleanRow['fecha'] ?? '');
 
         // Obtener nombre del mes
         $nombreMes = $this->meses[(int)$fecha->format('n')];
@@ -194,12 +197,12 @@ class RuedaProcessor
         return [
             'reasig' => null,
             'nit' => (string) $nit,
-            'nombre' => (string) ($row['nnombre'] ?? ''),
+            'nombre' => (string) ($cleanRow['nnombre'] ?? ''),
             'corredor' => (string) $nombreTrader,
-            'comi_porcentual' => (float) ($row['comi_porce'] ?? 0),
-            'ciudad' => (string) ($row['nomzona'] ?? ''),
+            'comi_porcentual' => (float) ($cleanRow['comi_porce'] ?? 0),
+            'ciudad' => (string) ($cleanRow['nomzona'] ?? ''),
             'fecha' => $fecha->format('Y-m-d'),
-            'rueda_no' => (int) ($row['rueda_no'] ?? 0),
+            'rueda_no' => (int) ($cleanRow['rueda_no'] ?? 0),
             'negociado' => (float) $gtotal,
             'comi_bna' => 0.0,
             'campo_209' => 0.0,
