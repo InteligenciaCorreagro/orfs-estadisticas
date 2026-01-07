@@ -13,6 +13,7 @@ use App\Controllers\AuthController;
 use App\Controllers\Admin\DashboardController;
 use App\Controllers\Admin\DebugController;
 use App\Controllers\Admin\CargaArchivoController;
+use App\Controllers\Admin\CargaArchivoV2Controller;
 use App\Controllers\Admin\TraderController;
 use App\Controllers\Admin\UsuarioController;
 use App\Controllers\Reportes\OrfsController;
@@ -62,7 +63,12 @@ class Routes
         Router::get('/admin/carga-archivo', [CargaArchivoController::class, 'index'], $adminMiddleware);
         Router::post('/admin/carga-archivo/upload', [CargaArchivoController::class, 'upload'], $adminMiddleware);
         Router::get('/admin/carga-archivo/historial', [CargaArchivoController::class, 'historial'], $adminMiddleware);
-        
+
+        // Carga de archivos V2 (sin cache)
+        Router::get('/admin/carga-archivo-v2', [CargaArchivoV2Controller::class, 'index'], $adminMiddleware);
+        Router::post('/admin/carga-archivo-v2/upload', [CargaArchivoV2Controller::class, 'upload'], $adminMiddleware);
+        Router::get('/admin/carga-archivo-v2/historial', [CargaArchivoV2Controller::class, 'historial'], $adminMiddleware);
+
         // Traders
         Router::get('/admin/traders', [TraderController::class, 'index'], $adminMiddleware);
         Router::get('/admin/traders/create', [TraderController::class, 'create'], $adminMiddleware);
