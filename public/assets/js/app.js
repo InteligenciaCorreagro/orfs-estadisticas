@@ -61,6 +61,18 @@ function formatNumber(number, decimals = 2) {
     }).format(number);
 }
 
+// Formatear porcentaje
+function formatPercentage(value, decimals = 5) {
+    if (value === null || value === undefined || value === '') return '0.00000%';
+    const numValue = parseFloat(value);
+    if (isNaN(numValue)) return '0.00000%';
+
+    // El valor ya viene como decimal (ej: 0.01100 = 1.1%)
+    // Multiplicamos por 100 para obtener el porcentaje
+    const percentage = (numValue * 100).toFixed(decimals);
+    return `${percentage}%`;
+}
+
 // Formatear fecha
 function formatDate(dateString) {
     const date = new Date(dateString);

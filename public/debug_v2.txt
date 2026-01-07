@@ -1,4 +1,0 @@
-=== LOG V2 - VERSIÓN SIN CACHE ===
-Esperando primera carga...
-
-Este archivo mostrará logs detallados de cada paso del procesamiento.

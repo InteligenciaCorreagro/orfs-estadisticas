@@ -170,32 +170,35 @@ function renderTable(data) {
     let html = `
         <div style="overflow-x: auto;">
             <table class="table table-striped" style="font-size: 11px;">
-                <thead>
+                <thead style="background: linear-gradient(135deg, #2d3436 0%, #000000 100%); color: white;">
                     <tr>
-                        <th rowspan="2" style="vertical-align: middle;">Corredor</th>
-                        <th rowspan="2" style="vertical-align: middle;">NIT</th>
-                        <th rowspan="2" style="vertical-align: middle;">Cliente</th>
+                        <th rowspan="2" style="vertical-align: middle; border-right: 1px solid #27ae60;">Corredor</th>
+                        <th rowspan="2" style="vertical-align: middle; border-right: 1px solid #27ae60;">NIT</th>
+                        <th rowspan="2" style="vertical-align: middle; border-right: 2px solid #27ae60;">Cliente</th>
     `;
-    
-    meses.forEach(mes => {
+
+    meses.forEach((mes, idx) => {
+        const borderRight = idx === 11 ? '2px solid #27ae60' : '1px solid #555';
         html += `
-            <th colspan="3" class="text-center" style="background: #f0f0f0;">
+            <th colspan="3" class="text-center" style="border-right: ${borderRight};">
                 ${mes.charAt(0).toUpperCase() + mes.slice(1, 3)}
             </th>
         `;
     });
-    
+
     html += `
-                        <th colspan="3" class="text-center" style="background: #e0e0e0; font-weight: bold;">Total</th>
+                        <th colspan="3" class="text-center" style="background: #27ae60; font-weight: bold;">Total</th>
                     </tr>
                     <tr>
     `;
-    
+
     for (let i = 0; i < 13; i++) {
+        const isLast = i === 12;
+        const bgColor = isLast ? 'background: #27ae60;' : '';
         html += `
-            <th style="font-size: 10px;">Trans</th>
-            <th style="font-size: 10px;">Com</th>
-            <th style="font-size: 10px;">Marg</th>
+            <th style="font-size: 10px; ${bgColor}">Trans</th>
+            <th style="font-size: 10px; ${bgColor}">Com%</th>
+            <th style="font-size: 10px; ${bgColor} ${isLast ? '' : 'border-right: 1px solid #555;'}">Marg%</th>
         `;
     }
     
@@ -209,22 +212,34 @@ function renderTable(data) {
         html += `
             <tr>
                 <td>${row.corredor}</td>
-                <td>${row.nit}</td>
+                <td><span style="font-family: monospace; background: #F8F9FA; padding: 2px 6px; border-radius: 4px; font-size: 10px;">${row.nit}</span></td>
                 <td>${row.cliente}</td>
         `;
-        
+
         meses.forEach(mes => {
+            const transado = parseFloat(row[mes + '_transado']) || 0;
+            const comision = parseFloat(row[mes + '_comision']) || 0;
+            const margen = parseFloat(row[mes + '_margen']) || 0;
+            const comisionPct = transado > 0 ? comision / transado : 0;
+            const margenPct = transado > 0 ? margen / transado : 0;
+
             html += `
-                <td style="text-align: right;">${formatCurrency(row[mes + '_transado'])}</td>
-                <td style="text-align: right;">${formatCurrency(row[mes + '_comision'])}</td>
-                <td style="text-align: right;">${formatCurrency(row[mes + '_margen'])}</td>
+                <td style="text-align: right;">${transado > 0 ? formatCurrency(transado) : '-'}</td>
+                <td style="text-align: right; color: #27ae60; font-weight: 600;">${transado > 0 ? formatPercentage(comisionPct) : '-'}</td>
+                <td style="text-align: right; color: #27ae60; font-weight: 600;">${transado > 0 ? formatPercentage(margenPct) : '-'}</td>
             `;
         });
-        
+
+        const totalTransado = parseFloat(row.total_transado) || 0;
+        const totalComision = parseFloat(row.total_comision) || 0;
+        const totalMargen = parseFloat(row.total_margen) || 0;
+        const totalComisionPct = totalTransado > 0 ? totalComision / totalTransado : 0;
+        const totalMargenPct = totalTransado > 0 ? totalMargen / totalTransado : 0;
+
         html += `
-                <td style="text-align: right; background: #f0f0f0; font-weight: bold;">${formatCurrency(row.total_transado)}</td>
-                <td style="text-align: right; background: #f0f0f0; font-weight: bold;">${formatCurrency(row.total_comision)}</td>
-                <td style="text-align: right; background: #f0f0f0; font-weight: bold;">${formatCurrency(row.total_margen)}</td>
+                <td style="text-align: right; background: #f0f0f0; font-weight: bold;">${formatCurrency(totalTransado)}</td>
+                <td style="text-align: right; background: #f0f0f0; font-weight: bold; color: #27ae60;">${formatPercentage(totalComisionPct)}</td>
+                <td style="text-align: right; background: #f0f0f0; font-weight: bold; color: #27ae60;">${formatPercentage(totalMargenPct)}</td>
             </tr>
         `;
     });

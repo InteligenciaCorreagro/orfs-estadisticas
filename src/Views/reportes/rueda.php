@@ -213,33 +213,95 @@ function renderDetalle(data) {
         return;
     }
 
+    // Agrupar por corredor para vista expandible
+    const groupedData = {};
+    data.forEach(row => {
+        const key = `${row.corredor}`;
+        if (!groupedData[key]) {
+            groupedData[key] = {
+                corredor: row.corredor,
+                ciudad: row.ciudad,
+                clientes: [],
+                totalTransado: 0,
+                totalComision: 0,
+                totalMargen: 0
+            };
+        }
+        groupedData[key].clientes.push(row);
+        groupedData[key].totalTransado += parseFloat(row.transado) || 0;
+        groupedData[key].totalComision += parseFloat(row.comision) || 0;
+        groupedData[key].totalMargen += parseFloat(row.margen) || 0;
+    });
+
     let html = `
         <div class="table-wrapper">
-            <table class="table table-striped">
-                <thead>
+            <table class="table table-striped table-expandable">
+                <thead style="background: linear-gradient(135deg, #2d3436 0%, #000000 100%); color: white;">
                     <tr>
+                        <th style="width: 40px;"></th>
                         <th><i class="fas fa-map-marker-alt"></i> Ciudad</th>
                         <th><i class="fas fa-user-tie"></i> Corredor</th>
-                        <th><i class="fas fa-building"></i> Cliente</th>
-                        <th><i class="fas fa-id-card"></i> NIT</th>
-                        <th class="text-right"><i class="fas fa-dollar-sign"></i> Transado</th>
-                        <th class="text-right"><i class="fas fa-percentage"></i> Comisión</th>
-                        <th class="text-right"><i class="fas fa-chart-line"></i> Margen</th>
+                        <th class="text-right"><i class="fas fa-building"></i> Clientes</th>
+                        <th class="text-right"><i class="fas fa-dollar-sign"></i> Total Transado</th>
+                        <th class="text-right"><i class="fas fa-percentage"></i> Total Comisión</th>
+                        <th class="text-right"><i class="fas fa-chart-line"></i> Total Margen</th>
                     </tr>
                 </thead>
                 <tbody>
     `;
 
-    data.forEach(row => {
+    Object.values(groupedData).forEach((group, index) => {
+        const avgComision = group.totalComision / group.totalTransado;
+        const avgMargen = group.totalMargen / group.totalTransado;
+
         html += `
-            <tr>
-                <td><i class="fas fa-map-pin" style="color: #95A5A6; margin-right: 6px;"></i>${row.ciudad || 'N/A'}</td>
-                <td><i class="fas fa-user" style="color: var(--primary-color); margin-right: 6px;"></i>${row.corredor}</td>
-                <td>${row.cliente}</td>
-                <td><span style="font-family: monospace; background: #F8F9FA; padding: 2px 8px; border-radius: 4px;">${row.nit}</span></td>
-                <td class="text-right"><strong>${formatCurrency(row.transado)}</strong></td>
-                <td class="text-right" style="color: var(--success-color);"><strong>${formatCurrency(row.comision)}</strong></td>
-                <td class="text-right" style="color: var(--primary-color);"><strong>${formatCurrency(row.margen)}</strong></td>
+            <tr class="corredor-row" data-index="${index}" style="cursor: pointer; background: #f8f9fa;">
+                <td>
+                    <i class="fas fa-chevron-right expand-icon" style="color: #2ecc71; transition: transform 0.3s;"></i>
+                </td>
+                <td><i class="fas fa-map-pin" style="color: #95A5A6; margin-right: 6px;"></i>${group.ciudad || 'N/A'}</td>
+                <td><i class="fas fa-user" style="color: #2ecc71; margin-right: 6px;"></i><strong>${group.corredor}</strong></td>
+                <td class="text-right"><span class="badge" style="background: #2ecc71; color: white; padding: 4px 10px; border-radius: 12px;">${group.clientes.length}</span></td>
+                <td class="text-right"><strong>${formatCurrency(group.totalTransado)}</strong></td>
+                <td class="text-right" style="color: #27ae60; font-weight: bold;">${formatPercentage(avgComision)}</td>
+                <td class="text-right" style="color: #27ae60; font-weight: bold;">${formatPercentage(avgMargen)}</td>
+            </tr>
+            <tr class="detalle-row" data-index="${index}" style="display: none;">
+                <td colspan="7" style="padding: 0; background: #ecf0f1;">
+                    <div style="padding: 15px; background: white; margin: 10px; border-radius: 8px; border-left: 4px solid #2ecc71;">
+                        <table class="table table-sm" style="margin: 0;">
+                            <thead style="background: #f8f9fa;">
+                                <tr style="font-size: 11px;">
+                                    <th><i class="fas fa-building"></i> Cliente</th>
+                                    <th><i class="fas fa-id-card"></i> NIT</th>
+                                    <th class="text-right"><i class="fas fa-dollar-sign"></i> Transado</th>
+                                    <th class="text-right"><i class="fas fa-percentage"></i> Comisión %</th>
+                                    <th class="text-right"><i class="fas fa-chart-line"></i> Margen %</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+        `;
+
+        group.clientes.forEach(cliente => {
+            const comisionPct = parseFloat(cliente.comision) / parseFloat(cliente.transado);
+            const margenPct = parseFloat(cliente.margen) / parseFloat(cliente.transado);
+
+            html += `
+                <tr style="font-size: 11px;">
+                    <td>${cliente.cliente}</td>
+                    <td><span style="font-family: monospace; background: #F8F9FA; padding: 2px 8px; border-radius: 4px; font-size: 10px;">${cliente.nit}</span></td>
+                    <td class="text-right">${formatCurrency(cliente.transado)}</td>
+                    <td class="text-right" style="color: #27ae60; font-weight: 600;">${formatPercentage(comisionPct)}</td>
+                    <td class="text-right" style="color: #27ae60; font-weight: 600;">${formatPercentage(margenPct)}</td>
+                </tr>
+            `;
+        });
+
+        html += `
+                            </tbody>
+                        </table>
+                    </div>
+                </td>
             </tr>
         `;
     });
@@ -251,6 +313,23 @@ function renderDetalle(data) {
     `;
 
     document.getElementById('dataContainer').innerHTML = html;
+
+    // Agregar event listeners para expandir/colapsar
+    document.querySelectorAll('.corredor-row').forEach(row => {
+        row.addEventListener('click', function() {
+            const index = this.getAttribute('data-index');
+            const detalleRow = document.querySelector(`.detalle-row[data-index="${index}"]`);
+            const icon = this.querySelector('.expand-icon');
+
+            if (detalleRow.style.display === 'none') {
+                detalleRow.style.display = 'table-row';
+                icon.style.transform = 'rotate(90deg)';
+            } else {
+                detalleRow.style.display = 'none';
+                icon.style.transform = 'rotate(0deg)';
+            }
+        });
+    });
 }
 
 function exportarRueda() {
