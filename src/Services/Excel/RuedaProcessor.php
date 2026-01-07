@@ -137,11 +137,27 @@ class RuedaProcessor
 
             // Procesar y guardar registro
             try {
+                file_put_contents($debugFile,
+                    "Procesando fila {$index}...\n",
+                    FILE_APPEND
+                );
+
                 $registro = $this->procesarRegistro($row);
+
+                file_put_contents($debugFile,
+                    "Registro procesado, intentando INSERT...\n",
+                    FILE_APPEND
+                );
 
                 // INSERTAR en la base de datos
                 // Database::insert() ya se encarga de validar y limpiar los datos
                 $id = Database::insert('orfs_transactions', $registro);
+
+                file_put_contents($debugFile,
+                    "✓ Registro insertado con ID: {$id}\n",
+                    FILE_APPEND
+                );
+
                 $registrosInsertados++;
             } catch (\PDOException $e) {
                 // Log detallado del error

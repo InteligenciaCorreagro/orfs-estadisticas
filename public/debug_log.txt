@@ -1,9 +1,11 @@
-=== DEBUG LOG ===
-Esperando nueva carga de archivo...
+=== NUEVO DEBUG LOG ===
+OPcache limpiado y logging mejorado.
 
-Este archivo mostrará información detallada sobre:
+Este archivo mostrará:
+- Procesamiento de cada rueda paso a paso
 - DELETE de datos anteriores
-- INSERT de nuevos registros
-- Cualquier error que ocurra
+- Procesamiento de cada fila individual
+- INSERT de cada registro
+- Cualquier error con stack trace completo
 
-Sube un archivo Excel para comenzar el debugging.
+Recarga la página (Ctrl+F5) y sube el archivo de nuevo.
