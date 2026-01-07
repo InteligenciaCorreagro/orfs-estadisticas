@@ -216,13 +216,16 @@ class RuedaProcessor
             throw new \Exception("NIT o Trader vacío en registro");
         }
 
-        // Obtener porcentaje de comisión
+        // Obtener porcentaje de comisión del Trader (desde la tabla traders)
         $porcentajeComision = $this->obtenerPorcentajeComision($nombreTrader, $nit);
 
-        // Calcular comisión
-        // IMPORTANTE: El porcentaje ya viene como decimal (ej: 0.011 para 1.1%)
-        // NO se debe dividir entre 100, solo multiplicar directamente
-        $comisionCorr = $gtotal * $porcentajeComision;
+        // IMPORTANTE: Leer COMI_BNA del Excel (campo 'comisionc')
+        // Este es el campo crítico que faltaba
+        $comiBna = (float) ($cleanRow['comisionc'] ?? 0);
+
+        // Calcular comisión del corredor
+        // FÓRMULA CORRECTA: COMI_CORR = COMI_BNA × COMI_PORCENTUAL
+        $comisionCorr = $comiBna * $porcentajeComision;
 
         // Parsear fecha
         $fecha = $this->parsearFecha($cleanRow['fecha'] ?? '');
@@ -230,26 +233,32 @@ class RuedaProcessor
         // Obtener nombre del mes
         $nombreMes = $this->meses[(int)$fecha->format('n')];
 
+        // Leer otros campos del Excel si existen
+        $ivaBna = (float) ($cleanRow['costo_regc'] ?? 0);      // o el campo que corresponda
+        $ivaComi = (float) ($cleanRow['totaliva'] ?? 0);       // Total IVA
+        $ivaCama = (float) ($cleanRow['camarac'] ?? 0);        // Cámara
+        $facturado = (float) ($cleanRow['comisionv'] ?? 0);    // o el campo que corresponda
+
         // IMPORTANTE: Todos los valores deben ser tipos escalares (string, int, float, null)
         return [
             'reasig' => null,
             'nit' => (string) $nit,
             'nombre' => (string) ($cleanRow['nnombre'] ?? ''),
             'corredor' => (string) $nombreTrader,
-            'comi_porcentual' => (float) ($cleanRow['comi_porce'] ?? 0),
+            'comi_porcentual' => (float) $porcentajeComision,  // Usar el % del trader, no del Excel
             'ciudad' => (string) ($cleanRow['nomzona'] ?? ''),
             'fecha' => $fecha->format('Y-m-d'),
             'rueda_no' => (int) ($cleanRow['rueda_no'] ?? 0),
             'negociado' => (float) $gtotal,
-            'comi_bna' => 0.0,
+            'comi_bna' => (float) $comiBna,                     // ← CORREGIDO: Ahora lee del Excel
             'campo_209' => 0.0,
-            'comi_corr' => (float) $comisionCorr,
-            'iva_bna' => 0.0,
-            'iva_comi' => 0.0,
-            'iva_cama' => 0.0,
-            'facturado' => 0.0,
+            'comi_corr' => (float) $comisionCorr,               // ← CORREGIDO: = COMI_BNA × %
+            'iva_bna' => (float) $ivaBna,
+            'iva_comi' => (float) $ivaComi,
+            'iva_cama' => (float) $ivaCama,
+            'facturado' => (float) $facturado,
             'mes' => (string) $nombreMes,
-            'comi_corr_neto' => (float) $comisionCorr,
+            'comi_corr_neto' => (float) $comisionCorr,          // Mismo valor que COMI_CORR
             'year' => (int) $fecha->format('Y')
         ];
     }

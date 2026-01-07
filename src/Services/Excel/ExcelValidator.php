@@ -12,9 +12,11 @@ class ExcelValidator
         'nnombre',
         'nomtrader',
         'comi_porce',
+        'nomzona',
         'fecha',
         'rueda_no',
-        'gtotal'
+        'gtotal',
+        'comisionc'  // COMI_BNA - campo crítico para cálculos
     ];
     
     private array $errores = [];
