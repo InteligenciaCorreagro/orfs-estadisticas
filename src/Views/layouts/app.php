@@ -23,12 +23,15 @@ if (!$user) {
     <header class="header">
         <div class="container-fluid">
             <div class="header-content">
+                <button id="sidebarToggle" class="sidebar-toggle" aria-label="Toggle Sidebar">
+                    <i class="fas fa-bars"></i>
+                </button>
                 <div class="logo">
                     <a href="/dashboard" style="text-decoration: none; color: inherit;">
                         ORFS Estadisticas
                     </a>
                 </div>
-                
+
                 <div class="user-menu">
                     <span class="user-name">
                         <?= e($user['name']) ?>

@@ -99,12 +99,47 @@ document.addEventListener('DOMContentLoaded', function() {
     // Agregar clase active al menú actual
     const currentPath = window.location.pathname;
     const menuLinks = document.querySelectorAll('.sidebar-menu a');
-    
+
     menuLinks.forEach(link => {
         if (link.getAttribute('href') === currentPath) {
             link.classList.add('active');
         }
     });
+
+    // Sidebar toggle functionality
+    const sidebarToggle = document.getElementById('sidebarToggle');
+    if (sidebarToggle) {
+        // Check if sidebar state is saved in localStorage
+        const sidebarHidden = localStorage.getItem('sidebarHidden') === 'true';
+        if (sidebarHidden) {
+            document.body.classList.add('sidebar-hidden');
+        }
+
+        sidebarToggle.addEventListener('click', function() {
+            document.body.classList.toggle('sidebar-hidden');
+
+            // Save state to localStorage
+            const isHidden = document.body.classList.contains('sidebar-hidden');
+            localStorage.setItem('sidebarHidden', isHidden);
+
+            // Update icon
+            const icon = this.querySelector('i');
+            if (isHidden) {
+                icon.classList.remove('fa-bars');
+                icon.classList.add('fa-chevron-right');
+            } else {
+                icon.classList.remove('fa-chevron-right');
+                icon.classList.add('fa-bars');
+            }
+        });
+
+        // Set initial icon based on state
+        const icon = sidebarToggle.querySelector('i');
+        if (sidebarHidden) {
+            icon.classList.remove('fa-bars');
+            icon.classList.add('fa-chevron-right');
+        }
+    }
     
     // Manejar formularios con AJAX
     const ajaxForms = document.querySelectorAll('form[data-ajax="true"]');

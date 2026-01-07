@@ -220,7 +220,9 @@ class RuedaProcessor
         $porcentajeComision = $this->obtenerPorcentajeComision($nombreTrader, $nit);
 
         // Calcular comisión
-        $comisionCorr = $gtotal * ($porcentajeComision / 100);
+        // IMPORTANTE: El porcentaje ya viene como decimal (ej: 0.011 para 1.1%)
+        // NO se debe dividir entre 100, solo multiplicar directamente
+        $comisionCorr = $gtotal * $porcentajeComision;
 
         // Parsear fecha
         $fecha = $this->parsearFecha($cleanRow['fecha'] ?? '');
