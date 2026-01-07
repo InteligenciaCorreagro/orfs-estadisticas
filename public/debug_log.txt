@@ -1,2 +1,9 @@
-=== ESPERANDO CARGA DE ARCHIVO ===
-Este archivo se actualizará automáticamente cuando subas un archivo Excel.
+=== DEBUG LOG ===
+Esperando nueva carga de archivo...
+
+Este archivo mostrará información detallada sobre:
+- DELETE de datos anteriores
+- INSERT de nuevos registros
+- Cualquier error que ocurra
+
+Sube un archivo Excel para comenzar el debugging.

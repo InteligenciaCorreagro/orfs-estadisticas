@@ -100,8 +100,27 @@ class RuedaProcessor
 
     private function procesarRueda(array $data, int $ruedaNo): int
     {
+        $debugFile = __DIR__ . '/../../public/debug_log.txt';
+
+        file_put_contents($debugFile,
+            "\n\n========================================\n" .
+            "=== PROCESANDO RUEDA {$ruedaNo} ===\n" .
+            "========================================\n",
+            FILE_APPEND
+        );
+
         // Eliminar datos anteriores de esta rueda
+        file_put_contents($debugFile,
+            "Eliminando datos anteriores de rueda {$ruedaNo}...\n",
+            FILE_APPEND
+        );
+
         OrfsTransaction::eliminarPorRueda($ruedaNo);
+
+        file_put_contents($debugFile,
+            "Datos anteriores eliminados, iniciando inserción de registros...\n",
+            FILE_APPEND
+        );
 
         $registrosInsertados = 0;
 

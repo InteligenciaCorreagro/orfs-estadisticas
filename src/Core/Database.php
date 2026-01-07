@@ -173,9 +173,44 @@ class Database
 
     public static function delete(string $table, string $where, array $params = []): int
     {
+        $debugFile = __DIR__ . '/../../public/debug_log.txt';
+
+        file_put_contents($debugFile,
+            "\n\n=== DATABASE DELETE CALLED ===\n" .
+            "Tabla: {$table}\n" .
+            "WHERE: {$where}\n" .
+            "Params: " . json_encode($params, JSON_UNESCAPED_UNICODE) . "\n",
+            FILE_APPEND
+        );
+
         $sql = "DELETE FROM {$table} WHERE {$where}";
-        $stmt = self::query($sql, $params);
-        return $stmt->rowCount();
+
+        file_put_contents($debugFile,
+            "SQL: {$sql}\n",
+            FILE_APPEND
+        );
+
+        try {
+            $stmt = self::query($sql, $params);
+            $rowCount = $stmt->rowCount();
+
+            file_put_contents($debugFile,
+                "✓ DELETE EXITOSO! Filas afectadas: {$rowCount}\n",
+                FILE_APPEND
+            );
+
+            return $rowCount;
+        } catch (\PDOException $e) {
+            file_put_contents($debugFile,
+                "❌ ERROR PDO en DELETE:\n" .
+                "  Mensaje: " . $e->getMessage() . "\n" .
+                "  Código: " . $e->getCode() . "\n" .
+                "  SQL: {$sql}\n" .
+                "  Params: " . json_encode($params, JSON_UNESCAPED_UNICODE) . "\n",
+                FILE_APPEND
+            );
+            throw $e;
+        }
     }
 
     public static function beginTransaction(): void
