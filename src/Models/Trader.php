@@ -128,8 +128,8 @@ class Trader extends Model
     
     public static function buscarPorNombreONit(string $termino): ?self
     {
-        $sql = "SELECT * FROM traders WHERE nombre = :termino OR nit = :termino LIMIT 1";
-        $result = Database::fetch($sql, ['termino' => $termino]);
+        $sql = "SELECT * FROM traders WHERE nombre = :nombre OR nit = :nit LIMIT 1";
+        $result = Database::fetch($sql, ['nombre' => $termino, 'nit' => $termino]);
 
         if ($result) {
             $model = new static();
