@@ -66,16 +66,31 @@ class Database
 
     public static function insert(string $table, array $data): int
     {
+        $debugFile = __DIR__ . '/../../public/debug_log.txt';
+
+        // DEBUG: Log datos de entrada
+        file_put_contents($debugFile,
+            "\n\n=== DATABASE INSERT CALLED ===\n" .
+            "Tabla: {$table}\n" .
+            "Datos originales (keys): " . implode(', ', array_keys($data)) . "\n" .
+            "Total campos: " . count($data) . "\n",
+            FILE_APPEND
+        );
+
         // Filtrar y limpiar datos
         $cleanData = [];
+        $rejected = [];
         foreach ($data as $key => $value) {
             // Solo incluir claves válidas (no vacías, no numéricas)
             if (!is_string($key) || $key === '' || is_numeric($key)) {
+                $rejected[] = "Clave rechazada: '{$key}' (is_string: " . (is_string($key) ? 'true' : 'false') .
+                             ", is_numeric: " . (is_numeric($key) ? 'true' : 'false') . ")";
                 continue;
             }
 
             // Validar que el valor sea un tipo escalar o null
             if (!is_scalar($value) && !is_null($value)) {
+                $rejected[] = "Valor no escalar en '{$key}': " . gettype($value);
                 throw new \Exception(
                     "Valor inválido para la columna '{$key}' en tabla {$table}: " .
                     "se esperaba escalar o null, se recibió " . gettype($value)
@@ -85,13 +100,25 @@ class Database
             // Sanitizar nombre de columna (solo alfanuméricos y guion bajo)
             $sanitizedKey = preg_replace('/[^a-zA-Z0-9_]/', '', $key);
             if ($sanitizedKey !== $key) {
-                error_log("Columna renombrada: '{$key}' => '{$sanitizedKey}'");
+                file_put_contents($debugFile,
+                    "Columna renombrada: '{$key}' => '{$sanitizedKey}'\n",
+                    FILE_APPEND
+                );
             }
 
             $cleanData[$sanitizedKey] = $value;
         }
 
+        // DEBUG: Log datos rechazados
+        if (!empty($rejected)) {
+            file_put_contents($debugFile,
+                "Campos rechazados:\n" . implode("\n", $rejected) . "\n",
+                FILE_APPEND
+            );
+        }
+
         if (empty($cleanData)) {
+            file_put_contents($debugFile, "ERROR: No hay datos válidos\n", FILE_APPEND);
             throw new \Exception("No hay datos válidos para insertar en la tabla {$table}");
         }
 
@@ -100,22 +127,31 @@ class Database
 
         $sql = "INSERT INTO {$table} ({$columns}) VALUES ({$placeholders})";
 
-        // Debug mejorado
-        if ($_ENV['APP_DEBUG'] ?? false) {
-            error_log("SQL INSERT: " . $sql);
-            error_log("PARAMS: " . json_encode($cleanData, JSON_UNESCAPED_UNICODE));
-        }
+        // DEBUG: Log SQL y parámetros
+        file_put_contents($debugFile,
+            "SQL: {$sql}\n" .
+            "Campos limpios (" . count($cleanData) . "): " . implode(', ', array_keys($cleanData)) . "\n" .
+            "Placeholders: {$placeholders}\n" .
+            "Valores:\n" . json_encode($cleanData, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) . "\n",
+            FILE_APPEND
+        );
 
         try {
             $stmt = self::query($sql, $cleanData);
-            return (int) self::getInstance()->lastInsertId();
+            $id = (int) self::getInstance()->lastInsertId();
+
+            file_put_contents($debugFile, "✓ INSERT EXITOSO! ID: {$id}\n", FILE_APPEND);
+            return $id;
         } catch (\PDOException $e) {
             // Log detallado del error
-            error_log("ERROR EN INSERT:");
-            error_log("  SQL: " . $sql);
-            error_log("  Params: " . json_encode($cleanData, JSON_UNESCAPED_UNICODE));
-            error_log("  PDO Error: " . $e->getMessage());
-            error_log("  Error Code: " . $e->getCode());
+            file_put_contents($debugFile,
+                "❌ ERROR PDO:\n" .
+                "  Mensaje: " . $e->getMessage() . "\n" .
+                "  Código: " . $e->getCode() . "\n" .
+                "  SQL State: " . ($e->errorInfo[0] ?? 'N/A') . "\n" .
+                "  SQL: {$sql}\n",
+                FILE_APPEND
+            );
             throw $e;
         }
     }

@@ -1,1 +1,2 @@
-Debug log iniciado
+=== ESPERANDO CARGA DE ARCHIVO ===
+Este archivo se actualizará automáticamente cuando subas un archivo Excel.
