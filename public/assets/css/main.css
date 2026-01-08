@@ -632,12 +632,20 @@ body.sidebar-hidden .main-content {
     width: 100% !important;
     height: 100% !important;
     background: rgba(0, 0, 0, 0.7) !important;
-    display: flex !important;
+    display: none;
     justify-content: center !important;
     align-items: center !important;
     z-index: 9999 !important;
     backdrop-filter: blur(4px);
-    animation: fadeIn 0.3s ease;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
+.modal-overlay.modal-show {
+    display: flex !important;
+    opacity: 1;
+    pointer-events: auto;
 }
 
 @keyframes fadeIn {

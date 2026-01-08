@@ -52,7 +52,7 @@ $pageTitle = 'Negociado Diario';
 </div>
 
 <!-- Modal de detalle matricial -->
-<div id="detalleModal" class="modal-overlay" style="display: none;">
+<div id="detalleModal" class="modal-overlay">
     <div class="modal-container">
         <div class="modal-header">
             <h2 id="modalTitle"><i class="fas fa-th"></i> Negociado - Vista Matricial</h2>
@@ -129,7 +129,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Asegurar que el modal esté oculto al cargar
     const modal = document.getElementById('detalleModal');
     if (modal) {
-        modal.style.display = 'none';
+        modal.classList.remove('modal-show');
         console.log('[Negociado Diario] Modal hidden on load');
     }
 
@@ -158,7 +158,7 @@ document.addEventListener('DOMContentLoaded', function() {
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape') {
             const modal = document.getElementById('detalleModal');
-            if (modal && modal.style.display === 'flex') {
+            if (modal && modal.classList.contains('modal-show')) {
                 console.log('[Negociado Diario] ESC pressed, closing modal');
                 closeDetailModal();
             }
@@ -312,7 +312,7 @@ async function showMatricialView(event) {
 
     // Mostrar modal
     if (modal) {
-        modal.style.display = 'flex';
+        modal.classList.add('modal-show');
         console.log('[Negociado Diario] Modal displayed');
     }
 
@@ -530,7 +530,7 @@ function closeDetailModal() {
     console.log('[Negociado Diario] closeDetailModal called');
     const modal = document.getElementById('detalleModal');
     if (modal) {
-        modal.style.display = 'none';
+        modal.classList.remove('modal-show');
         console.log('[Negociado Diario] Modal closed');
     }
 
