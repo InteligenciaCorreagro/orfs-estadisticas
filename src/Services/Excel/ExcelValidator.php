@@ -12,9 +12,11 @@ class ExcelValidator
         'nnombre',
         'nomtrader',
         'comi_porce',
+        'nomzona',
         'fecha',
         'rueda_no',
-        'gtotal'
+        'gtotal',
+        'comi_corr'  // Comisión del corredor - viene del Excel
     ];
     
     private array $errores = [];

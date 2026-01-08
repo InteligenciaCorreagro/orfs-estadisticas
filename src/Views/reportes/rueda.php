@@ -5,16 +5,19 @@ $pageTitle = 'Reporte Ruedas';
 ?>
 
 <div class="page-header mb-3">
-    <h1>Reporte de Ruedas</h1>
-    <p class="text-muted">Detalle por rueda específica</p>
+    <h1><i class="fas fa-circle-notch"></i> Reporte de Ruedas</h1>
+    <p class="text-muted">Detalle completo por rueda específica de negociación</p>
 </div>
 
 <!-- Filtros -->
 <div class="card mb-3">
+    <div class="card-header">
+        <h3 class="card-title"><i class="fas fa-filter"></i> Filtros de Búsqueda</h3>
+    </div>
     <div class="card-body">
         <div class="d-flex gap-2 align-center" style="flex-wrap: wrap;">
             <div>
-                <label for="year">Año:</label>
+                <label for="year"><i class="far fa-calendar"></i> Año:</label>
                 <select name="year" id="year" class="form-select" style="width: 150px;" onchange="loadRuedas()">
                     <?php foreach (getYearsArray(2020) as $y): ?>
                         <option value="<?= $y ?>" <?= $y == ($year ?? date('Y')) ? 'selected' : '' ?>>
@@ -23,17 +26,17 @@ $pageTitle = 'Reporte Ruedas';
                     <?php endforeach; ?>
                 </select>
             </div>
-            
+
             <div>
-                <label for="rueda">Rueda:</label>
-                <select name="rueda" id="rueda" class="form-select" style="width: 200px;" onchange="loadDetalle()">
+                <label for="rueda"><i class="fas fa-list"></i> Rueda:</label>
+                <select name="rueda" id="rueda" class="form-select" style="width: 250px;" onchange="loadDetalle()">
                     <option value="">Seleccione una rueda</option>
                 </select>
             </div>
-            
+
             <div style="margin-top: 20px;">
                 <button type="button" class="btn btn-success" onclick="exportarRueda()" id="btnExportar" disabled>
-                    📥 Exportar Excel
+                    <i class="fas fa-file-excel"></i> Exportar Excel
                 </button>
             </div>
         </div>
@@ -45,9 +48,12 @@ $pageTitle = 'Reporte Ruedas';
 
 <!-- Detalle de la rueda -->
 <div class="card">
+    <div class="card-header">
+        <h3 class="card-title"><i class="fas fa-table"></i> Detalle de Transacciones</h3>
+    </div>
     <div class="card-body">
         <div id="dataContainer">
-            <p class="text-center text-muted">Seleccione una rueda para ver el detalle</p>
+            <p class="text-center text-muted"><i class="fas fa-arrow-up"></i> Seleccione una rueda para ver el detalle</p>
         </div>
     </div>
 </div>
@@ -90,15 +96,15 @@ async function loadDetalle() {
     const rueda = document.getElementById('rueda').value;
     
     if (!rueda) {
-        document.getElementById('dataContainer').innerHTML = 
-            '<p class="text-center text-muted">Seleccione una rueda para ver el detalle</p>';
+        document.getElementById('dataContainer').innerHTML =
+            '<p class="text-center text-muted"><i class="fas fa-arrow-up"></i> Seleccione una rueda para ver el detalle</p>';
         document.getElementById('estadisticasContainer').innerHTML = '';
         document.getElementById('btnExportar').disabled = true;
         return;
     }
-    
-    document.getElementById('dataContainer').innerHTML = 
-        '<div class="text-center"><div class="spinner"></div></div>';
+
+    document.getElementById('dataContainer').innerHTML =
+        '<div class="text-center"><div class="spinner"></div><p class="text-muted mt-2"><i class="fas fa-sync fa-spin"></i> Cargando datos...</p></div>';
     
     try {
         // Cargar estadísticas
@@ -122,61 +128,73 @@ async function loadDetalle() {
             renderDetalle(result.data);
             document.getElementById('btnExportar').disabled = false;
         } else {
-            document.getElementById('dataContainer').innerHTML = 
-                '<p class="text-center text-danger">Error al cargar datos</p>';
+            document.getElementById('dataContainer').innerHTML =
+                '<p class="text-center text-danger"><i class="fas fa-exclamation-circle"></i> Error al cargar datos</p>';
         }
     } catch (error) {
-        document.getElementById('dataContainer').innerHTML = 
-            '<p class="text-center text-danger">Error de conexión</p>';
+        document.getElementById('dataContainer').innerHTML =
+            '<p class="text-center text-danger"><i class="fas fa-wifi" style="text-decoration: line-through;"></i> Error de conexión</p>';
     }
 }
 
 function renderEstadisticas(stats) {
     const html = `
         <div class="row mb-3" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
-            <div class="card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+            <div class="card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none;">
                 <div class="card-body">
-                    <h4 style="margin: 0; font-size: 14px; opacity: 0.9;">Fecha</h4>
+                    <h4 style="margin: 0; font-size: 13px; opacity: 0.9; text-transform: uppercase; letter-spacing: 0.5px;">
+                        <i class="far fa-calendar-alt"></i> Fecha
+                    </h4>
                     <p style="margin: 10px 0 0 0; font-size: 20px; font-weight: bold;">
                         ${stats.fecha || 'N/A'}
                     </p>
                 </div>
             </div>
-            <div class="card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white;">
+            <div class="card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; border: none;">
                 <div class="card-body">
-                    <h4 style="margin: 0; font-size: 14px; opacity: 0.9;">Transacciones</h4>
+                    <h4 style="margin: 0; font-size: 13px; opacity: 0.9; text-transform: uppercase; letter-spacing: 0.5px;">
+                        <i class="fas fa-exchange-alt"></i> Transacciones
+                    </h4>
                     <p style="margin: 10px 0 0 0; font-size: 24px; font-weight: bold;">
-                        ${stats.total_transacciones || 0}
+                        ${(stats.total_transacciones || 0).toLocaleString('es-CO')}
                     </p>
                 </div>
             </div>
-            <div class="card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white;">
+            <div class="card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white; border: none;">
                 <div class="card-body">
-                    <h4 style="margin: 0; font-size: 14px; opacity: 0.9;">Total Transado</h4>
-                    <p style="margin: 10px 0 0 0; font-size: 24px; font-weight: bold;">
+                    <h4 style="margin: 0; font-size: 13px; opacity: 0.9; text-transform: uppercase; letter-spacing: 0.5px;">
+                        <i class="fas fa-dollar-sign"></i> Total Transado
+                    </h4>
+                    <p style="margin: 10px 0 0 0; font-size: 22px; font-weight: bold;">
                         ${formatCurrency(stats.total_transado)}
                     </p>
                 </div>
             </div>
-            <div class="card" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); color: white;">
+            <div class="card" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); color: white; border: none;">
                 <div class="card-body">
-                    <h4 style="margin: 0; font-size: 14px; opacity: 0.9;">Total Comisión</h4>
-                    <p style="margin: 10px 0 0 0; font-size: 24px; font-weight: bold;">
+                    <h4 style="margin: 0; font-size: 13px; opacity: 0.9; text-transform: uppercase; letter-spacing: 0.5px;">
+                        <i class="fas fa-percentage"></i> Total Comisión
+                    </h4>
+                    <p style="margin: 10px 0 0 0; font-size: 22px; font-weight: bold;">
                         ${formatCurrency(stats.total_comision)}
                     </p>
                 </div>
             </div>
-            <div class="card" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); color: white;">
+            <div class="card" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); color: white; border: none;">
                 <div class="card-body">
-                    <h4 style="margin: 0; font-size: 14px; opacity: 0.9;">Corredores</h4>
+                    <h4 style="margin: 0; font-size: 13px; opacity: 0.9; text-transform: uppercase; letter-spacing: 0.5px;">
+                        <i class="fas fa-users"></i> Corredores
+                    </h4>
                     <p style="margin: 10px 0 0 0; font-size: 24px; font-weight: bold;">
                         ${stats.total_corredores || 0}
                     </p>
                 </div>
             </div>
-            <div class="card" style="background: linear-gradient(135deg, #30cfd0 0%, #330867 100%); color: white;">
+            <div class="card" style="background: linear-gradient(135deg, #30cfd0 0%, #330867 100%); color: white; border: none;">
                 <div class="card-body">
-                    <h4 style="margin: 0; font-size: 14px; opacity: 0.9;">Ciudades</h4>
+                    <h4 style="margin: 0; font-size: 13px; opacity: 0.9; text-transform: uppercase; letter-spacing: 0.5px;">
+                        <i class="fas fa-map-marker-alt"></i> Ciudades
+                    </h4>
                     <p style="margin: 10px 0 0 0; font-size: 24px; font-weight: bold;">
                         ${stats.total_ciudades || 0}
                     </p>
@@ -184,55 +202,134 @@ function renderEstadisticas(stats) {
             </div>
         </div>
     `;
-    
+
     document.getElementById('estadisticasContainer').innerHTML = html;
 }
 
 function renderDetalle(data) {
     if (data.length === 0) {
-        document.getElementById('dataContainer').innerHTML = 
-            '<p class="text-center text-muted">No hay datos disponibles</p>';
+        document.getElementById('dataContainer').innerHTML =
+            '<p class="text-center text-muted"><i class="fas fa-inbox"></i> No hay datos disponibles</p>';
         return;
     }
-    
+
+    // Agrupar por corredor para vista expandible
+    const groupedData = {};
+    data.forEach(row => {
+        const key = `${row.corredor}`;
+        if (!groupedData[key]) {
+            groupedData[key] = {
+                corredor: row.corredor,
+                ciudad: row.ciudad,
+                clientes: [],
+                totalTransado: 0,
+                totalComision: 0,
+                totalMargen: 0
+            };
+        }
+        groupedData[key].clientes.push(row);
+        groupedData[key].totalTransado += parseFloat(row.transado) || 0;
+        groupedData[key].totalComision += parseFloat(row.comision) || 0;
+        groupedData[key].totalMargen += parseFloat(row.margen) || 0;
+    });
+
     let html = `
-        <div style="overflow-x: auto;">
-            <table class="table table-striped">
-                <thead>
+        <div class="table-wrapper">
+            <table class="table table-striped table-expandable">
+                <thead style="background: linear-gradient(135deg, #2d3436 0%, #000000 100%); color: white;">
                     <tr>
-                        <th>Ciudad</th>
-                        <th>Corredor</th>
-                        <th>Cliente</th>
-                        <th>NIT</th>
-                        <th>Transado</th>
-                        <th>Comisión</th>
-                        <th>Margen</th>
+                        <th style="width: 40px;"></th>
+                        <th><i class="fas fa-map-marker-alt"></i> Ciudad</th>
+                        <th><i class="fas fa-user-tie"></i> Corredor</th>
+                        <th class="text-right"><i class="fas fa-building"></i> Clientes</th>
+                        <th class="text-right"><i class="fas fa-dollar-sign"></i> Total Transado</th>
+                        <th class="text-right"><i class="fas fa-percentage"></i> Total Comisión</th>
+                        <th class="text-right"><i class="fas fa-chart-line"></i> Total Margen</th>
                     </tr>
                 </thead>
                 <tbody>
     `;
-    
-    data.forEach(row => {
+
+    Object.values(groupedData).forEach((group, index) => {
+        const avgComision = group.totalComision / group.totalTransado;
+        const avgMargen = group.totalMargen / group.totalTransado;
+
         html += `
-            <tr>
-                <td>${row.ciudad || 'N/A'}</td>
-                <td>${row.corredor}</td>
-                <td>${row.cliente}</td>
-                <td>${row.nit}</td>
-                <td style="text-align: right;">${formatCurrency(row.transado)}</td>
-                <td style="text-align: right;">${formatCurrency(row.comision)}</td>
-                <td style="text-align: right;">${formatCurrency(row.margen)}</td>
+            <tr class="corredor-row" data-index="${index}" style="cursor: pointer; background: #f8f9fa;">
+                <td>
+                    <i class="fas fa-chevron-right expand-icon" style="color: #2ecc71; transition: transform 0.3s;"></i>
+                </td>
+                <td><i class="fas fa-map-pin" style="color: #95A5A6; margin-right: 6px;"></i>${group.ciudad || 'N/A'}</td>
+                <td><i class="fas fa-user" style="color: #2ecc71; margin-right: 6px;"></i><strong>${group.corredor}</strong></td>
+                <td class="text-right"><span class="badge" style="background: #2ecc71; color: white; padding: 4px 10px; border-radius: 12px;">${group.clientes.length}</span></td>
+                <td class="text-right"><strong>${formatCurrency(group.totalTransado)}</strong></td>
+                <td class="text-right" style="color: #27ae60; font-weight: bold;">${formatPercentage(avgComision)}</td>
+                <td class="text-right" style="color: #27ae60; font-weight: bold;">${formatPercentage(avgMargen)}</td>
+            </tr>
+            <tr class="detalle-row" data-index="${index}" style="display: none;">
+                <td colspan="7" style="padding: 0; background: #ecf0f1;">
+                    <div style="padding: 15px; background: white; margin: 10px; border-radius: 8px; border-left: 4px solid #2ecc71;">
+                        <table class="table table-sm" style="margin: 0;">
+                            <thead style="background: #f8f9fa;">
+                                <tr style="font-size: 11px;">
+                                    <th><i class="fas fa-building"></i> Cliente</th>
+                                    <th><i class="fas fa-id-card"></i> NIT</th>
+                                    <th class="text-right"><i class="fas fa-dollar-sign"></i> Transado</th>
+                                    <th class="text-right"><i class="fas fa-percentage"></i> Comisión %</th>
+                                    <th class="text-right"><i class="fas fa-chart-line"></i> Margen %</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+        `;
+
+        group.clientes.forEach(cliente => {
+            const comisionPct = parseFloat(cliente.comision) / parseFloat(cliente.transado);
+            const margenPct = parseFloat(cliente.margen) / parseFloat(cliente.transado);
+
+            html += `
+                <tr style="font-size: 11px;">
+                    <td>${cliente.cliente}</td>
+                    <td><span style="font-family: monospace; background: #F8F9FA; padding: 2px 8px; border-radius: 4px; font-size: 10px;">${cliente.nit}</span></td>
+                    <td class="text-right">${formatCurrency(cliente.transado)}</td>
+                    <td class="text-right" style="color: #27ae60; font-weight: 600;">${formatPercentage(comisionPct)}</td>
+                    <td class="text-right" style="color: #27ae60; font-weight: 600;">${formatPercentage(margenPct)}</td>
+                </tr>
+            `;
+        });
+
+        html += `
+                            </tbody>
+                        </table>
+                    </div>
+                </td>
             </tr>
         `;
     });
-    
+
     html += `
                 </tbody>
             </table>
         </div>
     `;
-    
+
     document.getElementById('dataContainer').innerHTML = html;
+
+    // Agregar event listeners para expandir/colapsar
+    document.querySelectorAll('.corredor-row').forEach(row => {
+        row.addEventListener('click', function() {
+            const index = this.getAttribute('data-index');
+            const detalleRow = document.querySelector(`.detalle-row[data-index="${index}"]`);
+            const icon = this.querySelector('.expand-icon');
+
+            if (detalleRow.style.display === 'none') {
+                detalleRow.style.display = 'table-row';
+                icon.style.transform = 'rotate(90deg)';
+            } else {
+                detalleRow.style.display = 'none';
+                icon.style.transform = 'rotate(0deg)';
+            }
+        });
+    });
 }
 
 function exportarRueda() {

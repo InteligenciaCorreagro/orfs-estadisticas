@@ -97,21 +97,21 @@ class NegociadoDiarioController
         $year = (int) $request->get('year', date('Y'));
         $userRole = Session::get('user_role');
         $traderName = Session::get('trader_name');
-        
+
         $corredor = $userRole === 'trader' ? $traderName : $request->get('corredor');
-        
+
         $resultado = $this->negociadoService->obtenerNegociadosPorCliente($year, $corredor);
-        
+
         $ruedas = $resultado['ruedas'];
         $data = $resultado['data'];
-        
+
         // Preparar headers dinámicos
         $headers = ['NIT', 'Cliente', 'Corredor'];
         foreach ($ruedas as $rueda) {
             $headers[] = "Rueda {$rueda['rueda_no']}";
         }
         $headers[] = 'Total';
-        
+
         // Preparar datos
         $rows = [];
         foreach ($data as $row) {
@@ -120,24 +120,82 @@ class NegociadoDiarioController
                 $row['cliente'],
                 $row['corredor']
             ];
-            
+
             foreach ($ruedas as $rueda) {
                 $key = 'rueda_' . $rueda['rueda_no'];
                 $rowData[] = $row[$key] ?? 0;
             }
-            
+
             $rowData[] = $row['total'];
             $rows[] = $rowData;
         }
-        
+
         $excel = new ExcelWriter();
         $excel->setHeaders($headers)
               ->setData($rows)
               ->autoSize()
               ->addBorders()
               ->formatCurrency('D2:' . chr(67 + count($ruedas)) . (count($rows) + 1));
-        
+
         $filename = "Negociados_Diarios_{$year}" . ($corredor ? "_{$corredor}" : "") . ".xlsx";
         $excel->download($filename);
+    }
+
+    /**
+     * API: Obtener resumen agrupado por trader
+     */
+    public function getResumenPorTrader(Request $request): void
+    {
+        $year = (int) $request->get('year', date('Y'));
+        $userRole = Session::get('user_role');
+        $traderName = Session::get('trader_name');
+
+        // Si es trader, solo puede ver su propia información
+        $corredor = $userRole === 'trader' ? $traderName : null;
+
+        $data = $this->negociadoService->obtenerResumenPorTrader($year, $corredor);
+
+        $response = new Response();
+        $response->success('Resumen por trader obtenido', $data);
+    }
+
+    /**
+     * API: Obtener detalle mensual de un trader específico
+     */
+    public function getDetalleMensualTrader(Request $request, string $trader): void
+    {
+        $year = (int) $request->get('year', date('Y'));
+        $userRole = Session::get('user_role');
+        $traderName = Session::get('trader_name');
+
+        // Si es trader, solo puede ver su propia información
+        if ($userRole === 'trader' && $trader !== $traderName) {
+            $response = new Response();
+            $response->error('No autorizado para ver información de otro trader', [], 403);
+            return;
+        }
+
+        $data = $this->negociadoService->obtenerDetalleMensualPorTrader($year, $trader);
+
+        $response = new Response();
+        $response->success('Detalle mensual del trader obtenido', $data);
+    }
+
+    /**
+     * API: Obtener vista matricial de negociados (Cliente x Rueda)
+     */
+    public function getVistaMatricial(Request $request): void
+    {
+        $year = (int) $request->get('year', date('Y'));
+        $userRole = Session::get('user_role');
+        $traderName = Session::get('trader_name');
+
+        // Si es trader, solo puede ver su propia información
+        $corredor = $userRole === 'trader' ? $traderName : null;
+
+        $data = $this->negociadoService->obtenerVistaMatricialNegociados($year, $corredor);
+
+        $response = new Response();
+        $response->success('Vista matricial obtenida', $data);
     }
 }

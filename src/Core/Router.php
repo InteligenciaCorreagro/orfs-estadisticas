@@ -77,8 +77,18 @@ class Router
                 return;
             }
         }
-        
-        $response = new Response();
-        $response->error('Ruta no encontrada', [], 404);
+
+        // Ruta no encontrada
+        http_response_code(404);
+
+        // Si es petición AJAX, retornar JSON
+        if ($request->isAjax()) {
+            $response = new Response();
+            $response->error('Ruta no encontrada', [], 404);
+        } else {
+            // Si es petición normal, mostrar página 404
+            $requestedUrl = $_SERVER['REQUEST_URI'] ?? '';
+            require __DIR__ . '/../Views/errors/404.php';
+        }
     }
 }

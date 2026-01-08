@@ -66,16 +66,59 @@ class Database
 
     public static function insert(string $table, array $data): int
     {
+        $debugFile = __DIR__ . '/../../public/debug_log.txt';
+
+        // DEBUG: Log datos de entrada
+        file_put_contents($debugFile,
+            "\n\n=== DATABASE INSERT CALLED ===\n" .
+            "Tabla: {$table}\n" .
+            "Datos originales (keys): " . implode(', ', array_keys($data)) . "\n" .
+            "Total campos: " . count($data) . "\n",
+            FILE_APPEND
+        );
+
         // Filtrar y limpiar datos
         $cleanData = [];
+        $rejected = [];
         foreach ($data as $key => $value) {
             // Solo incluir claves válidas (no vacías, no numéricas)
-            if (is_string($key) && $key !== '' && !is_numeric($key)) {
-                $cleanData[$key] = $value;
+            if (!is_string($key) || $key === '' || is_numeric($key)) {
+                $rejected[] = "Clave rechazada: '{$key}' (is_string: " . (is_string($key) ? 'true' : 'false') .
+                             ", is_numeric: " . (is_numeric($key) ? 'true' : 'false') . ")";
+                continue;
             }
+
+            // Validar que el valor sea un tipo escalar o null
+            if (!is_scalar($value) && !is_null($value)) {
+                $rejected[] = "Valor no escalar en '{$key}': " . gettype($value);
+                throw new \Exception(
+                    "Valor inválido para la columna '{$key}' en tabla {$table}: " .
+                    "se esperaba escalar o null, se recibió " . gettype($value)
+                );
+            }
+
+            // Sanitizar nombre de columna (solo alfanuméricos y guion bajo)
+            $sanitizedKey = preg_replace('/[^a-zA-Z0-9_]/', '', $key);
+            if ($sanitizedKey !== $key) {
+                file_put_contents($debugFile,
+                    "Columna renombrada: '{$key}' => '{$sanitizedKey}'\n",
+                    FILE_APPEND
+                );
+            }
+
+            $cleanData[$sanitizedKey] = $value;
+        }
+
+        // DEBUG: Log datos rechazados
+        if (!empty($rejected)) {
+            file_put_contents($debugFile,
+                "Campos rechazados:\n" . implode("\n", $rejected) . "\n",
+                FILE_APPEND
+            );
         }
 
         if (empty($cleanData)) {
+            file_put_contents($debugFile, "ERROR: No hay datos válidos\n", FILE_APPEND);
             throw new \Exception("No hay datos válidos para insertar en la tabla {$table}");
         }
 
@@ -84,13 +127,33 @@ class Database
 
         $sql = "INSERT INTO {$table} ({$columns}) VALUES ({$placeholders})";
 
-        // Debug (remover en producción)
-        error_log("SQL INSERT: " . $sql);
-        error_log("PARAMS: " . json_encode($cleanData));
+        // DEBUG: Log SQL y parámetros
+        file_put_contents($debugFile,
+            "SQL: {$sql}\n" .
+            "Campos limpios (" . count($cleanData) . "): " . implode(', ', array_keys($cleanData)) . "\n" .
+            "Placeholders: {$placeholders}\n" .
+            "Valores:\n" . json_encode($cleanData, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) . "\n",
+            FILE_APPEND
+        );
 
-        self::query($sql, $cleanData);
+        try {
+            $stmt = self::query($sql, $cleanData);
+            $id = (int) self::getInstance()->lastInsertId();
 
-        return (int) self::getInstance()->lastInsertId();
+            file_put_contents($debugFile, "✓ INSERT EXITOSO! ID: {$id}\n", FILE_APPEND);
+            return $id;
+        } catch (\PDOException $e) {
+            // Log detallado del error
+            file_put_contents($debugFile,
+                "❌ ERROR PDO:\n" .
+                "  Mensaje: " . $e->getMessage() . "\n" .
+                "  Código: " . $e->getCode() . "\n" .
+                "  SQL State: " . ($e->errorInfo[0] ?? 'N/A') . "\n" .
+                "  SQL: {$sql}\n",
+                FILE_APPEND
+            );
+            throw $e;
+        }
     }
     public static function update(string $table, array $data, string $where, array $whereParams = []): int
     {
@@ -110,9 +173,44 @@ class Database
 
     public static function delete(string $table, string $where, array $params = []): int
     {
+        $debugFile = __DIR__ . '/../../public/debug_log.txt';
+
+        file_put_contents($debugFile,
+            "\n\n=== DATABASE DELETE CALLED ===\n" .
+            "Tabla: {$table}\n" .
+            "WHERE: {$where}\n" .
+            "Params: " . json_encode($params, JSON_UNESCAPED_UNICODE) . "\n",
+            FILE_APPEND
+        );
+
         $sql = "DELETE FROM {$table} WHERE {$where}";
-        $stmt = self::query($sql, $params);
-        return $stmt->rowCount();
+
+        file_put_contents($debugFile,
+            "SQL: {$sql}\n",
+            FILE_APPEND
+        );
+
+        try {
+            $stmt = self::query($sql, $params);
+            $rowCount = $stmt->rowCount();
+
+            file_put_contents($debugFile,
+                "✓ DELETE EXITOSO! Filas afectadas: {$rowCount}\n",
+                FILE_APPEND
+            );
+
+            return $rowCount;
+        } catch (\PDOException $e) {
+            file_put_contents($debugFile,
+                "❌ ERROR PDO en DELETE:\n" .
+                "  Mensaje: " . $e->getMessage() . "\n" .
+                "  Código: " . $e->getCode() . "\n" .
+                "  SQL: {$sql}\n" .
+                "  Params: " . json_encode($params, JSON_UNESCAPED_UNICODE) . "\n",
+                FILE_APPEND
+            );
+            throw $e;
+        }
     }
 
     public static function beginTransaction(): void

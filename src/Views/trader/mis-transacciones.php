@@ -1,26 +1,23 @@
 <?php
-// src/Views/reportes/negociado-diario.php
+// src/Views/trader/mis-transacciones.php
 ob_start();
-$pageTitle = 'Negociado Diario';
+$pageTitle = 'Mis Transacciones';
 ?>
 
 <div class="page-header mb-3">
-    <h1><i class="fas fa-chart-line"></i> Negociado Diario</h1>
-    <p class="text-muted">Vista resumida por trader con detalle matricial</p>
+    <h1><i class="fas fa-chart-line"></i> Mis Transacciones</h1>
+    <p class="text-muted">Vista detallada de tus negociaciones - <?= e($traderName) ?></p>
 </div>
 
 <!-- Filtros -->
 <div class="card mb-3">
-    <div class="card-header">
-        <h3 class="card-title"><i class="fas fa-filter"></i> Filtros</h3>
-    </div>
     <div class="card-body">
         <div class="d-flex gap-2 align-center" style="flex-wrap: wrap;">
             <div>
-                <label for="year"><i class="far fa-calendar"></i> Año:</label>
-                <select name="year" id="year" class="form-select" style="width: 150px;" onchange="loadData()">
+                <label for="year"><i class="far fa-calendar-alt"></i> Año:</label>
+                <select id="year" class="form-select" style="width: 150px;" onchange="loadData()">
                     <?php foreach (getYearsArray(2020) as $y): ?>
-                        <option value="<?= $y ?>" <?= $y == ($year ?? date('Y')) ? 'selected' : '' ?>>
+                        <option value="<?= $y ?>" <?= $y == $year ? 'selected' : '' ?>>
                             <?= $y ?>
                         </option>
                     <?php endforeach; ?>
@@ -36,16 +33,16 @@ $pageTitle = 'Negociado Diario';
     </div>
 </div>
 
-<!-- Tabla resumida -->
+<!-- Resumen -->
 <div class="card">
     <div class="card-header">
-        <h3 class="card-title"><i class="fas fa-users"></i> Resumen por Trader</h3>
+        <h3 class="card-title"><i class="fas fa-table"></i> Resumen de Mis Transacciones</h3>
     </div>
     <div class="card-body">
         <div id="dataContainer">
             <div class="text-center">
                 <div class="spinner"></div>
-                <p class="text-muted mt-2"><i class="fas fa-sync fa-spin"></i> Cargando datos...</p>
+                <p class="text-muted mt-2">Cargando datos...</p>
             </div>
         </div>
     </div>
@@ -55,7 +52,7 @@ $pageTitle = 'Negociado Diario';
 <div id="detalleModal" class="modal-overlay">
     <div class="modal-container">
         <div class="modal-header">
-            <h2 id="modalTitle"><i class="fas fa-th"></i> Negociado - Vista Matricial</h2>
+            <h2 id="modalTitle"><i class="fas fa-th"></i> Detalle de Mis Transacciones</h2>
             <button class="modal-close" id="closeModalBtn" type="button">&times;</button>
         </div>
 
@@ -80,19 +77,16 @@ $pageTitle = 'Negociado Diario';
                         <option value="12">Diciembre</option>
                     </select>
                 </div>
-
                 <div>
                     <label for="filterRueda"><i class="fas fa-circle-notch"></i> Rueda:</label>
                     <select id="filterRueda" class="form-select" style="width: 200px;" onchange="applyFilters()">
                         <option value="">Todas las ruedas</option>
                     </select>
                 </div>
-
                 <div>
                     <label for="filterCliente"><i class="fas fa-search"></i> Cliente:</label>
                     <input type="text" id="filterCliente" class="form-control" style="width: 300px;" placeholder="Buscar por nombre de cliente..." oninput="applyFilters()">
                 </div>
-
                 <div style="margin-top: 20px;">
                     <button class="btn btn-secondary" onclick="clearFilters()">
                         <i class="fas fa-times"></i> Limpiar Filtros
@@ -124,13 +118,13 @@ let allRuedas = [];
 const MESES = ['', 'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
 
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('[Negociado Diario] DOM loaded');
+    console.log('[Mis Transacciones] DOM loaded');
 
     // Asegurar que el modal esté oculto al cargar
     const modal = document.getElementById('detalleModal');
     if (modal) {
         modal.classList.remove('modal-show');
-        console.log('[Negociado Diario] Modal hidden on load');
+        console.log('[Mis Transacciones] Modal hidden on load');
     }
 
     // Event listener para el botón Ver Detalle Completo
@@ -139,7 +133,7 @@ document.addEventListener('DOMContentLoaded', function() {
         btnVerDetalle.addEventListener('click', function(e) {
             e.preventDefault();
             e.stopPropagation();
-            console.log('[Negociado Diario] Ver Detalle button clicked');
+            console.log('[Mis Transacciones] Ver Detalle button clicked');
             showMatricialView(e);
         });
     }
@@ -149,7 +143,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (closeBtn) {
         closeBtn.addEventListener('click', function(e) {
             e.stopPropagation();
-            console.log('[Negociado Diario] Close button clicked');
+            console.log('[Mis Transacciones] Close button clicked');
             closeDetailModal();
         });
     }
@@ -159,7 +153,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (e.key === 'Escape') {
             const modal = document.getElementById('detalleModal');
             if (modal && modal.classList.contains('modal-show')) {
-                console.log('[Negociado Diario] ESC pressed, closing modal');
+                console.log('[Mis Transacciones] ESC pressed, closing modal');
                 closeDetailModal();
             }
         }
@@ -169,7 +163,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (modal) {
         modal.addEventListener('click', function(e) {
             if (e.target === modal) {
-                console.log('[Negociado Diario] Clicked outside modal, closing');
+                console.log('[Mis Transacciones] Clicked outside modal, closing');
                 closeDetailModal();
             }
         });
@@ -191,7 +185,7 @@ async function loadData() {
     const year = document.getElementById('year').value;
 
     try {
-        const response = await fetch(`/api/reportes/negociado-diario/traders?year=${year}`, {
+        const response = await fetch(`/api/trader/mis-clientes?year=${year}`, {
             headers: { 'X-Requested-With': 'XMLHttpRequest' }
         });
 
@@ -217,67 +211,65 @@ function renderSummaryTable(data) {
         return;
     }
 
+    // Calcular totales
+    let totalClientes = data.length;
+    let totalTransado = 0;
+    let totalComision = 0;
+
+    data.forEach(row => {
+        totalTransado += parseFloat(row.total_negociado) || 0;
+        totalComision += parseFloat(row.total_comision) || 0;
+    });
+
     let html = `
+        <div class="row mb-3" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
+            <div class="card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                <div class="card-body">
+                    <h3 style="margin: 0; font-size: 14px; opacity: 0.9;">Mis Clientes</h3>
+                    <p style="margin: 10px 0 0 0; font-size: 28px; font-weight: bold;">${totalClientes}</p>
+                </div>
+            </div>
+            <div class="card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white;">
+                <div class="card-body">
+                    <h3 style="margin: 0; font-size: 14px; opacity: 0.9;">Total Negociado</h3>
+                    <p style="margin: 10px 0 0 0; font-size: 28px; font-weight: bold;">${formatCurrency(totalTransado)}</p>
+                </div>
+            </div>
+            <div class="card" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); color: white;">
+                <div class="card-body">
+                    <h3 style="margin: 0; font-size: 14px; opacity: 0.9;">Total Comisión</h3>
+                    <p style="margin: 10px 0 0 0; font-size: 28px; font-weight: bold;">${formatCurrency(totalComision)}</p>
+                </div>
+            </div>
+        </div>
         <div class="table-wrapper">
             <table class="table table-striped">
                 <thead style="background: linear-gradient(135deg, #2d3436 0%, #000000 100%); color: white;">
                     <tr>
-                        <th><i class="fas fa-user-tie"></i> Trader</th>
-                        <th class="text-right"><i class="fas fa-users"></i> Clientes</th>
-                        <th class="text-right"><i class="fas fa-circle-notch"></i> Ruedas</th>
-                        <th class="text-right"><i class="fas fa-dollar-sign"></i> Total Transado</th>
-                        <th class="text-right"><i class="fas fa-coins"></i> Total Comisión</th>
+                        <th><i class="fas fa-user"></i> Cliente</th>
+                        <th class="text-right"><i class="fas fa-dollar-sign"></i> Total Negociado</th>
+                        <th class="text-right"><i class="fas fa-coins"></i> Comisión</th>
                         <th class="text-right"><i class="fas fa-chart-line"></i> Margen %</th>
                     </tr>
                 </thead>
                 <tbody>
     `;
 
-    // Calcular total general
-    let totalGeneral = {
-        clientes: 0,
-        ruedas: 0,
-        transado: 0,
-        comision: 0,
-        margen: 0
-    };
-
     data.forEach((row, index) => {
-        const totalTransado = parseFloat(row.total_transado) || 0;
-        const totalComision = parseFloat(row.total_comision) || 0;
-        const totalMargen = parseFloat(row.total_margen) || 0;
-        const margenPct = totalTransado > 0 ? totalMargen / totalTransado : 0;
-
-        totalGeneral.clientes += parseInt(row.total_clientes) || 0;
-        totalGeneral.ruedas += parseInt(row.total_ruedas) || 0;
-        totalGeneral.transado += totalTransado;
-        totalGeneral.comision += totalComision;
-        totalGeneral.margen += totalMargen;
+        const negociado = parseFloat(row.total_negociado) || 0;
+        const comision = parseFloat(row.total_comision) || 0;
+        const margen = parseFloat(row.total_margen) || 0;
+        const margenPct = negociado > 0 ? (margen / negociado) : 0;
 
         html += `
             <tr>
-                <td><strong>${row.trader}</strong></td>
-                <td class="text-right"><span class="badge" style="background: #27ae60; color: white; padding: 4px 10px; border-radius: 12px;">${row.total_clientes}</span></td>
-                <td class="text-right">${row.total_ruedas}</td>
-                <td class="text-right"><strong>${formatCurrency(totalTransado)}</strong></td>
-                <td class="text-right" style="color: #27ae60; font-weight: bold;">${formatCurrency(totalComision)}</td>
+                <td><strong>${row.nombre}</strong></td>
+                <td class="text-right">${formatCurrency(negociado)}</td>
+                <td class="text-right" style="color: #27ae60; font-weight: bold;">${formatCurrency(comision)}</td>
                 <td class="text-right" style="color: #27ae60; font-weight: bold;">${formatPercentage(margenPct)}</td>
             </tr>
         `;
     });
-
-    // Fila de totales
-    const margenGeneralPct = totalGeneral.transado > 0 ? totalGeneral.margen / totalGeneral.transado : 0;
-    html += `
-        <tr style="background: linear-gradient(135deg, #27ae60 0%, #1e8449 100%); color: white; font-weight: bold; font-size: 14px;">
-            <td><i class="fas fa-calculator"></i> TOTAL GENERAL</td>
-            <td class="text-right">${totalGeneral.clientes}</td>
-            <td class="text-right">${totalGeneral.ruedas}</td>
-            <td class="text-right">${formatCurrency(totalGeneral.transado)}</td>
-            <td class="text-right">${formatCurrency(totalGeneral.comision)}</td>
-            <td class="text-right">${formatPercentage(margenGeneralPct)}</td>
-        </tr>
-    `;
 
     html += `
                 </tbody>
@@ -289,7 +281,7 @@ function renderSummaryTable(data) {
 }
 
 async function showMatricialView(event) {
-    console.log('[Negociado Diario] showMatricialView called');
+    console.log('[Mis Transacciones] showMatricialView called');
 
     // Prevenir propagación del evento
     if (event) {
@@ -300,7 +292,7 @@ async function showMatricialView(event) {
     const year = document.getElementById('year').value;
     const modal = document.getElementById('detalleModal');
 
-    console.log('[Negociado Diario] Year:', year);
+    console.log('[Mis Transacciones] Year:', year);
 
     // Mostrar loading
     document.getElementById('detalleContent').innerHTML = `
@@ -313,29 +305,29 @@ async function showMatricialView(event) {
     // Mostrar modal
     if (modal) {
         modal.classList.add('modal-show');
-        console.log('[Negociado Diario] Modal displayed');
+        console.log('[Mis Transacciones] Modal displayed');
     }
 
     try {
         const url = `/api/reportes/negociado-diario/matricial?year=${year}`;
-        console.log('[Negociado Diario] Fetching:', url);
+        console.log('[Mis Transacciones] Fetching:', url);
 
         const response = await fetch(url, {
             headers: { 'X-Requested-With': 'XMLHttpRequest' }
         });
 
-        console.log('[Negociado Diario] Response status:', response.status);
+        console.log('[Mis Transacciones] Response status:', response.status);
 
         const result = await response.json();
-        console.log('[Negociado Diario] Response data:', result);
+        console.log('[Mis Transacciones] Response data:', result);
 
         if (result.success) {
             allRuedas = result.data.ruedas || [];
             fullData = result.data.data || [];
             filteredData = [...fullData];
 
-            console.log('[Negociado Diario] Ruedas count:', allRuedas.length);
-            console.log('[Negociado Diario] Data count:', fullData.length);
+            console.log('[Mis Transacciones] Ruedas count:', allRuedas.length);
+            console.log('[Mis Transacciones] Data count:', fullData.length);
 
             // Poblar filtro de ruedas
             populateRuedasFilter();
@@ -343,12 +335,12 @@ async function showMatricialView(event) {
             // Renderizar vista matricial
             renderMatricialView();
         } else {
-            console.error('[Negociado Diario] API returned error:', result.message);
+            console.error('[Mis Transacciones] API returned error:', result.message);
             document.getElementById('detalleContent').innerHTML =
                 '<p class="text-center text-danger"><i class="fas fa-exclamation-circle"></i> Error al cargar detalle</p>';
         }
     } catch (error) {
-        console.error('[Negociado Diario] Error loading matricial view:', error);
+        console.error('[Mis Transacciones] Error loading matricial view:', error);
         document.getElementById('detalleContent').innerHTML =
             '<p class="text-center text-danger"><i class="fas fa-wifi" style="text-decoration: line-through;"></i> Error de conexión</p>';
     }
@@ -387,10 +379,10 @@ function clearFilters() {
 }
 
 function renderMatricialView() {
-    console.log('[Negociado Diario] renderMatricialView called, filteredData length:', filteredData.length);
+    console.log('[Mis Transacciones] renderMatricialView called, filteredData length:', filteredData.length);
 
     if (filteredData.length === 0) {
-        console.warn('[Negociado Diario] No filtered data available');
+        console.warn('[Mis Transacciones] No filtered data available');
         document.getElementById('detalleContent').innerHTML =
             '<p class="text-center text-muted"><i class="fas fa-filter"></i> No hay datos con los filtros seleccionados</p>';
         return;
@@ -527,11 +519,11 @@ function renderMatricialView() {
 }
 
 function closeDetailModal() {
-    console.log('[Negociado Diario] closeDetailModal called');
+    console.log('[Mis Transacciones] closeDetailModal called');
     const modal = document.getElementById('detalleModal');
     if (modal) {
         modal.classList.remove('modal-show');
-        console.log('[Negociado Diario] Modal closed');
+        console.log('[Mis Transacciones] Modal closed');
     }
 
     fullData = [];

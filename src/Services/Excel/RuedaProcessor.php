@@ -100,8 +100,27 @@ class RuedaProcessor
 
     private function procesarRueda(array $data, int $ruedaNo): int
     {
+        $debugFile = __DIR__ . '/../../public/debug_log.txt';
+
+        file_put_contents($debugFile,
+            "\n\n========================================\n" .
+            "=== PROCESANDO RUEDA {$ruedaNo} ===\n" .
+            "========================================\n",
+            FILE_APPEND
+        );
+
         // Eliminar datos anteriores de esta rueda
+        file_put_contents($debugFile,
+            "Eliminando datos anteriores de rueda {$ruedaNo}...\n",
+            FILE_APPEND
+        );
+
         OrfsTransaction::eliminarPorRueda($ruedaNo);
+
+        file_put_contents($debugFile,
+            "Datos anteriores eliminados, iniciando inserción de registros...\n",
+            FILE_APPEND
+        );
 
         $registrosInsertados = 0;
 
@@ -118,29 +137,47 @@ class RuedaProcessor
 
             // Procesar y guardar registro
             try {
-                $registro = $this->procesarRegistro($row);
-
-                // VALIDAR que no haya claves vacías
-                $registroLimpio = array_filter(
-                    $registro,
-                    function ($key) {
-                        return is_string($key) && $key !== '' && !is_numeric($key);
-                    },
-                    ARRAY_FILTER_USE_KEY
+                file_put_contents($debugFile,
+                    "Procesando fila {$index}...\n",
+                    FILE_APPEND
                 );
 
-                // INSERTAR usando Database directamente con mejor control
-                $id = Database::insert('orfs_transactions', $registroLimpio);
+                $registro = $this->procesarRegistro($row);
+
+                file_put_contents($debugFile,
+                    "Registro procesado, intentando INSERT...\n",
+                    FILE_APPEND
+                );
+
+                // INSERTAR en la base de datos
+                // Database::insert() ya se encarga de validar y limpiar los datos
+                $id = Database::insert('orfs_transactions', $registro);
+
+                file_put_contents($debugFile,
+                    "✓ Registro insertado con ID: {$id}\n",
+                    FILE_APPEND
+                );
+
                 $registrosInsertados++;
             } catch (\PDOException $e) {
                 // Log detallado del error
-                error_log("Error insertando registro de rueda {$ruedaNo}:");
+                error_log("Error PDO insertando registro de rueda {$ruedaNo}:");
                 error_log("  - Mensaje: " . $e->getMessage());
-                error_log("  - Datos: " . json_encode($row));
+                error_log("  - Código: " . $e->getCode());
+                error_log("  - Datos del Excel: " . json_encode($row, JSON_UNESCAPED_UNICODE));
 
                 // Re-lanzar con contexto
                 throw new \Exception(
                     "Error insertando registro de rueda {$ruedaNo}: " . $e->getMessage()
+                );
+            } catch (\Exception $e) {
+                // Log de otros errores (validación, tipos, etc.)
+                error_log("Error al procesar registro de rueda {$ruedaNo}:");
+                error_log("  - Mensaje: " . $e->getMessage());
+                error_log("  - Datos: " . json_encode($row, JSON_UNESCAPED_UNICODE));
+
+                throw new \Exception(
+                    "Error procesando registro de rueda {$ruedaNo}: " . $e->getMessage()
                 );
             }
         }
@@ -150,48 +187,77 @@ class RuedaProcessor
 
     private function procesarRegistro(array $row): array
     {
-        $nit = trim($row['ncodigo'] ?? '');
-        $nombreTrader = trim($row['nomtrader'] ?? '');
-        $gtotal = (float) ($row['gtotal'] ?? 0);
+        // Convertir todos los valores a string, PRESERVANDO LAS CLAVES
+        // IMPORTANTE: array_map() NO preserva claves, por eso usamos foreach
+        $cleanRow = [];
+        foreach ($row as $key => $value) {
+            if (is_null($value)) {
+                $cleanRow[$key] = '';
+            } elseif (is_object($value)) {
+                // Manejar objetos RichText de PhpSpreadsheet
+                if (method_exists($value, 'getPlainText')) {
+                    $cleanRow[$key] = trim($value->getPlainText());
+                } elseif (method_exists($value, '__toString')) {
+                    $cleanRow[$key] = trim((string) $value);
+                } else {
+                    $cleanRow[$key] = '';
+                }
+            } else {
+                $cleanRow[$key] = trim((string) $value);
+            }
+        }
+
+        $nit = $cleanRow['ncodigo'] ?? '';
+        $nombreTrader = $cleanRow['nomtrader'] ?? '';
+        $gtotal = (float) ($cleanRow['gtotal'] ?? 0);
 
         // Validar campos requeridos
         if (empty($nit) || empty($nombreTrader)) {
             throw new \Exception("NIT o Trader vacío en registro");
         }
 
-        // Obtener porcentaje de comisión
+        // Obtener porcentaje de comisión del Trader (desde la tabla traders)
         $porcentajeComision = $this->obtenerPorcentajeComision($nombreTrader, $nit);
 
-        // Calcular comisión
-        $comisionCorr = $gtotal * ($porcentajeComision / 100);
+        // IMPORTANTE: Leer COMI_BNA del Excel (campo 'comisionc')
+        $comiBna = (float) ($cleanRow['comisionc'] ?? 0);
+
+        // IMPORTANTE: Leer COMI_CORR DIRECTAMENTE del Excel
+        // NO se calcula, ya viene calculado en el archivo
+        $comiCorr = (float) ($cleanRow['comi_corr'] ?? 0);
 
         // Parsear fecha
-        $fecha = $this->parsearFecha($row['fecha']);
+        $fecha = $this->parsearFecha($cleanRow['fecha'] ?? '');
 
         // Obtener nombre del mes
         $nombreMes = $this->meses[(int)$fecha->format('n')];
 
-        // IMPORTANTE: NO incluir created_at ni updated_at
-        // La tabla los maneja automáticamente con DEFAULT CURRENT_TIMESTAMP
+        // Leer otros campos del Excel si existen
+        $ivaBna = (float) ($cleanRow['costo_regc'] ?? 0);
+        $ivaComi = (float) ($cleanRow['totaliva'] ?? 0);
+        $ivaCama = (float) ($cleanRow['camarac'] ?? 0);
+        $facturado = (float) ($cleanRow['comisionv'] ?? 0);
+
+        // IMPORTANTE: Todos los valores deben ser tipos escalares (string, int, float, null)
         return [
             'reasig' => null,
-            'nit' => $nit,
-            'nombre' => trim($row['nnombre'] ?? ''),
-            'corredor' => $nombreTrader,
-            'comi_porcentual' => (float) ($row['comi_porce'] ?? 0),
-            'ciudad' => trim($row['nomzona'] ?? ''),
+            'nit' => (string) $nit,
+            'nombre' => (string) ($cleanRow['nnombre'] ?? ''),
+            'corredor' => (string) $nombreTrader,
+            'comi_porcentual' => (float) $porcentajeComision,
+            'ciudad' => (string) ($cleanRow['nomzona'] ?? ''),
             'fecha' => $fecha->format('Y-m-d'),
-            'rueda_no' => (int) $row['rueda_no'],
-            'negociado' => $gtotal,
-            'comi_bna' => 0.0,
+            'rueda_no' => (int) ($cleanRow['rueda_no'] ?? 0),
+            'negociado' => (float) $gtotal,
+            'comi_bna' => (float) $comiBna,                     // Del Excel: comisionc
             'campo_209' => 0.0,
-            'comi_corr' => $comisionCorr,
-            'iva_bna' => 0.0,
-            'iva_comi' => 0.0,
-            'iva_cama' => 0.0,
-            'facturado' => 0.0,
-            'mes' => $nombreMes,
-            'comi_corr_neto' => $comisionCorr,
+            'comi_corr' => (float) $comiCorr,                   // ← Del Excel: comi_corr (directo)
+            'iva_bna' => (float) $ivaBna,
+            'iva_comi' => (float) $ivaComi,
+            'iva_cama' => (float) $ivaCama,
+            'facturado' => (float) $facturado,
+            'mes' => (string) $nombreMes,
+            'comi_corr_neto' => (float) $comiCorr,              // Mismo valor que COMI_CORR
             'year' => (int) $fecha->format('Y')
         ];
     }
