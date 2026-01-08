@@ -134,7 +134,7 @@ class NegociadoDiarioService
                 COUNT(DISTINCT rueda_no) AS total_ruedas,
                 SUM(negociado) AS total_transado,
                 SUM(comi_corr) AS total_comision,
-                SUM(margen) AS total_margen
+                SUM(comi_corr - comi_bna) AS total_margen
             FROM orfs_transactions
             WHERE year = :year
             GROUP BY corredor
@@ -159,7 +159,7 @@ class NegociadoDiarioService
                 MONTH(fecha) AS mes_num,
                 SUM(negociado) AS transado,
                 SUM(comi_corr) AS comision,
-                SUM(margen) AS margen
+                SUM(comi_corr - comi_bna) AS margen
             FROM orfs_transactions
             WHERE year = :year AND corredor = :trader
             GROUP BY nit, nombre, corredor, rueda_no, mes, mes_num
