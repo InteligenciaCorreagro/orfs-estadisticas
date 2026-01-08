@@ -16,7 +16,7 @@ class ExcelValidator
         'fecha',
         'rueda_no',
         'gtotal',
-        'comisionc'  // COMI_BNA - campo crítico para cálculos
+        'comi_corr'  // Comisión del corredor - viene del Excel
     ];
     
     private array $errores = [];
