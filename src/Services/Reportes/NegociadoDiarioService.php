@@ -171,4 +171,42 @@ class NegociadoDiarioService
             'trader' => $trader
         ]);
     }
+
+    /**
+     * Obtener vista matricial de negociados: Cliente x Rueda
+     * Para mostrar todos los clientes con sus transacciones por rueda
+     */
+    public function obtenerVistaMatricialNegociados(int $year): array
+    {
+        // Primero obtener todas las ruedas del año ordenadas
+        $sqlRuedas = "
+            SELECT DISTINCT rueda_no, fecha, mes, MONTH(fecha) AS mes_num
+            FROM orfs_transactions
+            WHERE year = :year
+            ORDER BY rueda_no ASC
+        ";
+        $ruedas = Database::fetchAll($sqlRuedas, ['year' => $year]);
+
+        // Obtener todos los datos agrupados por cliente y rueda
+        $sqlData = "
+            SELECT
+                nit,
+                nombre AS cliente,
+                corredor,
+                rueda_no,
+                mes,
+                MONTH(fecha) AS mes_num,
+                SUM(negociado) AS transado
+            FROM orfs_transactions
+            WHERE year = :year
+            GROUP BY nit, nombre, corredor, rueda_no, mes, mes_num
+            ORDER BY nombre ASC, rueda_no ASC
+        ";
+        $data = Database::fetchAll($sqlData, ['year' => $year]);
+
+        return [
+            'ruedas' => $ruedas,
+            'data' => $data
+        ];
+    }
 }

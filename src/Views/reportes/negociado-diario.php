@@ -6,7 +6,7 @@ $pageTitle = 'Negociado Diario';
 
 <div class="page-header mb-3">
     <h1><i class="fas fa-chart-line"></i> Negociado Diario</h1>
-    <p class="text-muted">Vista resumida por trader con detalle mensual</p>
+    <p class="text-muted">Vista resumida por trader con detalle matricial</p>
 </div>
 
 <!-- Filtros -->
@@ -45,11 +45,11 @@ $pageTitle = 'Negociado Diario';
     </div>
 </div>
 
-<!-- Modal de detalle mensual -->
+<!-- Modal de detalle matricial -->
 <div id="detalleModal" class="modal-overlay" style="display: none;">
-    <div class="modal-container" style="max-width: 95%; max-height: 90vh;">
+    <div class="modal-container" style="max-width: 98%; max-height: 95vh;">
         <div class="modal-header">
-            <h2 id="modalTitle"><i class="fas fa-user-tie"></i> Detalle Mensual del Trader</h2>
+            <h2 id="modalTitle"><i class="fas fa-th"></i> Negociado - Vista Matricial</h2>
             <button class="modal-close" onclick="closeDetailModal()">&times;</button>
         </div>
 
@@ -90,7 +90,7 @@ $pageTitle = 'Negociado Diario';
             </div>
         </div>
 
-        <div class="modal-body" style="overflow-y: auto; max-height: calc(90vh - 220px);">
+        <div class="modal-body" style="overflow: auto; max-height: calc(95vh - 200px);">
             <div id="detalleContent">
                 <div class="text-center">
                     <div class="spinner"></div>
@@ -107,7 +107,7 @@ $additionalJS = <<<'JS'
 // Variables globales
 let fullData = [];
 let filteredData = [];
-let currentTrader = null;
+let allRuedas = [];
 
 // Nombres de meses
 const MESES = ['', 'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
@@ -207,8 +207,8 @@ function renderSummaryTable(data) {
                 <td class="text-right" style="color: #27ae60; font-weight: bold;">${formatCurrency(totalComision)}</td>
                 <td class="text-right" style="color: #27ae60; font-weight: bold;">${formatPercentage(margenPct)}</td>
                 <td class="text-center">
-                    <button class="btn btn-sm" style="background: #27ae60; color: white; border: none; padding: 6px 16px; border-radius: 6px; cursor: pointer;" onclick="showDetail('${row.trader}')">
-                        <i class="fas fa-eye"></i> Ver Detalle
+                    <button class="btn btn-sm" style="background: #27ae60; color: white; border: none; padding: 6px 16px; border-radius: 6px; cursor: pointer;" onclick="showMatricialView()">
+                        <i class="fas fa-th"></i> Ver Detalle
                     </button>
                 </td>
             </tr>
@@ -238,53 +238,50 @@ function renderSummaryTable(data) {
     document.getElementById('dataContainer').innerHTML = html;
 }
 
-async function showDetail(trader) {
-    currentTrader = trader;
+async function showMatricialView() {
     const year = document.getElementById('year').value;
 
     // Mostrar modal
     document.getElementById('detalleModal').style.display = 'flex';
-    document.getElementById('modalTitle').innerHTML = `<i class="fas fa-user-tie"></i> Detalle Mensual - ${trader}`;
     document.getElementById('detalleContent').innerHTML = `
         <div class="text-center">
             <div class="spinner"></div>
-            <p class="text-muted mt-2">Cargando detalle...</p>
+            <p class="text-muted mt-2">Cargando vista matricial...</p>
         </div>
     `;
 
     try {
-        const response = await fetch(`/api/reportes/negociado-diario/trader/${encodeURIComponent(trader)}/detalle?year=${year}`, {
+        const response = await fetch(`/api/reportes/negociado-diario/matricial?year=${year}`, {
             headers: { 'X-Requested-With': 'XMLHttpRequest' }
         });
 
         const result = await response.json();
 
         if (result.success) {
-            fullData = result.data;
+            allRuedas = result.data.ruedas || [];
+            fullData = result.data.data || [];
             filteredData = [...fullData];
 
             // Poblar filtro de ruedas
             populateRuedasFilter();
 
-            // Renderizar detalle
-            renderDetail();
+            // Renderizar vista matricial
+            renderMatricialView();
         } else {
             document.getElementById('detalleContent').innerHTML =
                 '<p class="text-center text-danger"><i class="fas fa-exclamation-circle"></i> Error al cargar detalle</p>';
         }
     } catch (error) {
-        console.error('Error loading detail:', error);
+        console.error('Error loading matricial view:', error);
         document.getElementById('detalleContent').innerHTML =
             '<p class="text-center text-danger"><i class="fas fa-wifi" style="text-decoration: line-through;"></i> Error de conexión</p>';
     }
 }
 
 function populateRuedasFilter() {
-    const ruedas = [...new Set(fullData.map(row => row.rueda_no))].sort((a, b) => a - b);
-
     let html = '<option value="">Todas las ruedas</option>';
-    ruedas.forEach(rueda => {
-        html += `<option value="${rueda}">Rueda ${rueda}</option>`;
+    allRuedas.forEach(rueda => {
+        html += `<option value="${rueda.rueda_no}">Rueda ${rueda.rueda_no}</option>`;
     });
 
     document.getElementById('filterRueda').innerHTML = html;
@@ -300,131 +297,141 @@ function applyFilters() {
         return true;
     });
 
-    renderDetail();
+    renderMatricialView();
 }
 
 function clearFilters() {
     document.getElementById('filterMes').value = '';
     document.getElementById('filterRueda').value = '';
     filteredData = [...fullData];
-    renderDetail();
+    renderMatricialView();
 }
 
-function renderDetail() {
+function renderMatricialView() {
     if (filteredData.length === 0) {
         document.getElementById('detalleContent').innerHTML =
             '<p class="text-center text-muted"><i class="fas fa-filter"></i> No hay datos con los filtros seleccionados</p>';
         return;
     }
 
-    // Agrupar por cliente y mes
-    const grouped = {};
+    // Determinar qué ruedas mostrar basado en los filtros
+    const mesFilter = document.getElementById('filterMes').value;
+    const ruedaFilter = document.getElementById('filterRueda').value;
 
+    let ruedasAMostrar = allRuedas;
+    if (mesFilter) {
+        ruedasAMostrar = allRuedas.filter(r => r.mes_num == mesFilter);
+    }
+    if (ruedaFilter) {
+        ruedasAMostrar = allRuedas.filter(r => r.rueda_no == ruedaFilter);
+    }
+
+    // Agrupar datos por cliente
+    const clientesMap = {};
     filteredData.forEach(row => {
-        const key = `${row.nit}|${row.cliente}`;
-        if (!grouped[key]) {
-            grouped[key] = {
+        const key = `${row.nit}`;
+        if (!clientesMap[key]) {
+            clientesMap[key] = {
                 nit: row.nit,
-                cliente: row.cliente,
-                meses: {}
+                nombre: row.cliente,
+                corredor: row.corredor,
+                ruedas: {}
             };
         }
 
-        const mesKey = row.mes_num;
-        if (!grouped[key].meses[mesKey]) {
-            grouped[key].meses[mesKey] = {
-                transado: 0,
-                comision: 0,
-                margen: 0,
-                ruedas: []
-            };
-        }
-
-        grouped[key].meses[mesKey].transado += parseFloat(row.transado) || 0;
-        grouped[key].meses[mesKey].comision += parseFloat(row.comision) || 0;
-        grouped[key].meses[mesKey].margen += parseFloat(row.margen) || 0;
-        grouped[key].meses[mesKey].ruedas.push(row.rueda_no);
+        clientesMap[key].ruedas[row.rueda_no] = parseFloat(row.transado) || 0;
     });
 
+    const clientes = Object.values(clientesMap);
+
+    // Calcular título del mes si hay filtro
+    let mesTitulo = '';
+    if (mesFilter) {
+        mesTitulo = `Total ${MESES[parseInt(mesFilter)]}`;
+    } else {
+        mesTitulo = 'Total general';
+    }
+
     let html = `
-        <div class="table-wrapper">
-            <table class="table table-striped" style="font-size: 12px;">
-                <thead style="background: #27ae60; color: white; position: sticky; top: 0; z-index: 1;">
+        <div style="overflow-x: auto;">
+            <table class="table table-striped" style="font-size: 11px; white-space: nowrap;">
+                <thead style="background: #4472C4; color: white; position: sticky; top: 0; z-index: 10;">
                     <tr>
-                        <th style="position: sticky; left: 0; background: #27ae60; z-index: 2;">Cliente</th>
-                        <th style="position: sticky; left: 250px; background: #27ae60; z-index: 2;">NIT</th>
-                        <th>Mes</th>
-                        <th class="text-right">Transado</th>
-                        <th class="text-right">Comisión $</th>
-                        <th class="text-right">Margen %</th>
-                        <th>Ruedas</th>
+                        <th style="position: sticky; left: 0; background: #4472C4; z-index: 11; min-width: 250px;">NOMBRE</th>
+    `;
+
+    // Headers de ruedas
+    ruedasAMostrar.forEach(rueda => {
+        html += `<th class="text-center" style="min-width: 120px;">${rueda.rueda_no}</th>`;
+    });
+
+    html += `
+                        <th class="text-right" style="background: #f0f0f0; color: #2d3436; font-weight: bold; min-width: 150px;">${mesTitulo}</th>
                     </tr>
                 </thead>
                 <tbody>
     `;
 
-    // Totales generales
-    let totalGeneral = {
-        transado: 0,
-        comision: 0,
-        margen: 0
-    };
+    // Totales por mes/general
+    let totalMes = 0;
+    let totalesPorRueda = {};
 
-    Object.values(grouped).forEach(clienteData => {
-        let clienteTotalTransado = 0;
-        let clienteTotalComision = 0;
-        let clienteTotalMargen = 0;
+    clientes.forEach((cliente, idx) => {
+        let totalCliente = 0;
 
-        // Ordenar meses
-        const mesesOrdenados = Object.keys(clienteData.meses).sort((a, b) => parseInt(a) - parseInt(b));
+        html += `
+            <tr style="${idx % 2 === 0 ? 'background: #f8f9fa;' : ''}">
+                <td style="position: sticky; left: 0; background: ${idx % 2 === 0 ? '#f8f9fa' : 'white'}; z-index: 1; font-weight: 500;">
+                    ${cliente.nombre}
+                </td>
+        `;
 
-        mesesOrdenados.forEach((mes, index) => {
-            const mesData = clienteData.meses[mes];
-            const margenPct = mesData.transado > 0 ? mesData.margen / mesData.transado : 0;
+        ruedasAMostrar.forEach(rueda => {
+            const valor = cliente.ruedas[rueda.rueda_no] || 0;
+            totalCliente += valor;
 
-            clienteTotalTransado += mesData.transado;
-            clienteTotalComision += mesData.comision;
-            clienteTotalMargen += mesData.margen;
+            if (!totalesPorRueda[rueda.rueda_no]) {
+                totalesPorRueda[rueda.rueda_no] = 0;
+            }
+            totalesPorRueda[rueda.rueda_no] += valor;
 
             html += `
-                <tr>
-                    ${index === 0 ? `<td rowspan="${mesesOrdenados.length}" style="position: sticky; left: 0; background: white; z-index: 1; vertical-align: top; font-weight: bold;">${clienteData.cliente}</td>` : ''}
-                    ${index === 0 ? `<td rowspan="${mesesOrdenados.length}" style="position: sticky; left: 250px; background: white; z-index: 1; vertical-align: top; font-family: monospace; font-size: 11px;">${clienteData.nit}</td>` : ''}
-                    <td><i class="far fa-calendar-alt"></i> ${MESES[parseInt(mes)]}</td>
-                    <td class="text-right">${formatCurrency(mesData.transado)}</td>
-                    <td class="text-right" style="color: #27ae60; font-weight: 600;">${formatCurrency(mesData.comision)}</td>
-                    <td class="text-right" style="color: #27ae60; font-weight: 600;">${formatPercentage(margenPct)}</td>
-                    <td><span style="font-size: 10px; color: #7f8c8d;">${[...new Set(mesData.ruedas)].sort((a,b) => a-b).join(', ')}</span></td>
-                </tr>
+                <td class="text-right">
+                    ${valor > 0 ? formatCurrency(valor) : '-'}
+                </td>
             `;
         });
 
-        // Subtotal por cliente
-        const clienteMargenPct = clienteTotalTransado > 0 ? clienteTotalMargen / clienteTotalTransado : 0;
+        totalMes += totalCliente;
+
         html += `
-            <tr style="background: #e8f5e9; font-weight: bold;">
-                <td colspan="3" class="text-right"><i class="fas fa-calculator"></i> Subtotal ${clienteData.cliente}</td>
-                <td class="text-right">${formatCurrency(clienteTotalTransado)}</td>
-                <td class="text-right" style="color: #27ae60;">${formatCurrency(clienteTotalComision)}</td>
-                <td class="text-right" style="color: #27ae60;">${formatPercentage(clienteMargenPct)}</td>
-                <td></td>
+                <td class="text-right" style="background: #f0f0f0; font-weight: bold;">
+                    ${formatCurrency(totalCliente)}
+                </td>
             </tr>
         `;
-
-        totalGeneral.transado += clienteTotalTransado;
-        totalGeneral.comision += clienteTotalComision;
-        totalGeneral.margen += clienteTotalMargen;
     });
 
-    // Total general
-    const totalMargenPct = totalGeneral.transado > 0 ? totalGeneral.margen / totalGeneral.transado : 0;
+    // Fila de totales por rueda
     html += `
-        <tr style="background: linear-gradient(135deg, #27ae60 0%, #1e8449 100%); color: white; font-weight: bold; font-size: 13px;">
-            <td colspan="3" class="text-right"><i class="fas fa-calculator"></i> TOTAL GENERAL</td>
-            <td class="text-right">${formatCurrency(totalGeneral.transado)}</td>
-            <td class="text-right">${formatCurrency(totalGeneral.comision)}</td>
-            <td class="text-right">${formatPercentage(totalMargenPct)}</td>
-            <td></td>
+        <tr style="background: linear-gradient(135deg, #27ae60 0%, #1e8449 100%); color: white; font-weight: bold; position: sticky; bottom: 0;">
+            <td style="position: sticky; left: 0; background: #27ae60; z-index: 11;">
+                <i class="fas fa-calculator"></i> TOTAL
+            </td>
+    `;
+
+    ruedasAMostrar.forEach(rueda => {
+        html += `
+            <td class="text-right">
+                ${formatCurrency(totalesPorRueda[rueda.rueda_no] || 0)}
+            </td>
+        `;
+    });
+
+    html += `
+            <td class="text-right" style="font-size: 13px;">
+                ${formatCurrency(totalMes)}
+            </td>
         </tr>
     `;
 
@@ -439,9 +446,9 @@ function renderDetail() {
 
 function closeDetailModal() {
     document.getElementById('detalleModal').style.display = 'none';
-    currentTrader = null;
     fullData = [];
     filteredData = [];
+    allRuedas = [];
 
     // Limpiar filtros
     document.getElementById('filterMes').value = '';

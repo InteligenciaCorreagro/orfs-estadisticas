@@ -184,6 +184,7 @@ class Routes
         Router::get('/api/reportes/negociado-diario/clientes-activos', [NegociadoDiarioController::class, 'getClientesMasActivos'], $reportesMiddleware);
         Router::get('/api/reportes/negociado-diario/traders', [NegociadoDiarioController::class, 'getResumenPorTrader'], $reportesMiddleware);
         Router::get('/api/reportes/negociado-diario/trader/:trader/detalle', [NegociadoDiarioController::class, 'getDetalleMensualTrader'], $reportesMiddleware);
+        Router::get('/api/reportes/negociado-diario/matricial', [NegociadoDiarioController::class, 'getVistaMatricial'], $reportesMiddleware);
 
         // Consolidado
         Router::get('/api/reportes/consolidado', [ConsolidadoController::class, 'getDashboard'], $reportesMiddleware);

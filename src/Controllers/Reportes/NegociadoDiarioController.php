@@ -166,4 +166,17 @@ class NegociadoDiarioController
         $response = new Response();
         $response->success('Detalle mensual del trader obtenido', $data);
     }
+
+    /**
+     * API: Obtener vista matricial de negociados (Cliente x Rueda)
+     */
+    public function getVistaMatricial(Request $request): void
+    {
+        $year = (int) $request->get('year', date('Y'));
+
+        $data = $this->negociadoService->obtenerVistaMatricialNegociados($year);
+
+        $response = new Response();
+        $response->success('Vista matricial obtenida', $data);
+    }
 }
