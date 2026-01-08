@@ -99,7 +99,7 @@ class NegociadoDiarioService
     public function obtenerClientesMasActivos(int $year, int $limit = 20): array
     {
         $sql = "
-            SELECT 
+            SELECT
                 nit,
                 nombre AS cliente,
                 corredor,
@@ -113,12 +113,62 @@ class NegociadoDiarioService
             ORDER BY total_transacciones DESC
             LIMIT :limit
         ";
-        
+
         $stmt = Database::getInstance()->prepare($sql);
         $stmt->bindValue(':year', $year, \PDO::PARAM_INT);
         $stmt->bindValue(':limit', $limit, \PDO::PARAM_INT);
         $stmt->execute();
-        
+
         return $stmt->fetchAll();
+    }
+
+    /**
+     * Obtener resumen agrupado por trader para vista de negociado diario
+     */
+    public function obtenerResumenPorTrader(int $year): array
+    {
+        $sql = "
+            SELECT
+                corredor AS trader,
+                COUNT(DISTINCT nit) AS total_clientes,
+                COUNT(DISTINCT rueda_no) AS total_ruedas,
+                SUM(negociado) AS total_transado,
+                SUM(comi_corr) AS total_comision,
+                SUM(margen) AS total_margen
+            FROM orfs_transactions
+            WHERE year = :year
+            GROUP BY corredor
+            ORDER BY corredor ASC
+        ";
+
+        return Database::fetchAll($sql, ['year' => $year]);
+    }
+
+    /**
+     * Obtener detalle mensual de un trader específico con todos sus clientes
+     */
+    public function obtenerDetalleMensualPorTrader(int $year, string $trader): array
+    {
+        $sql = "
+            SELECT
+                nit,
+                nombre AS cliente,
+                corredor AS trader,
+                rueda_no,
+                DATE_FORMAT(fecha, '%Y-%m') AS mes,
+                MONTH(fecha) AS mes_num,
+                SUM(negociado) AS transado,
+                SUM(comi_corr) AS comision,
+                SUM(margen) AS margen
+            FROM orfs_transactions
+            WHERE year = :year AND corredor = :trader
+            GROUP BY nit, nombre, corredor, rueda_no, mes, mes_num
+            ORDER BY mes_num ASC, nombre ASC, rueda_no ASC
+        ";
+
+        return Database::fetchAll($sql, [
+            'year' => $year,
+            'trader' => $trader
+        ]);
     }
 }
