@@ -28,7 +28,7 @@ $pageTitle = 'Negociado Diario';
             </div>
 
             <div style="margin-top: 20px;">
-                <button type="button" class="btn btn-primary" onclick="showMatricialView()" style="padding: 8px 20px;">
+                <button type="button" class="btn btn-primary" onclick="showMatricialView(event)" style="padding: 8px 20px;">
                     <i class="fas fa-eye"></i> Ver Detalle Completo
                 </button>
             </div>
@@ -53,7 +53,7 @@ $pageTitle = 'Negociado Diario';
 
 <!-- Modal de detalle matricial -->
 <div id="detalleModal" class="modal-overlay" style="display: none;">
-    <div class="modal-container">
+    <div class="modal-container" onclick="event.stopPropagation()">
         <div class="modal-header">
             <h2 id="modalTitle"><i class="fas fa-th"></i> Negociado - Vista Matricial</h2>
             <button class="modal-close" onclick="closeDetailModal()">&times;</button>
@@ -128,12 +128,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Cerrar modal con ESC
     document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape') {
+        if (e.key === 'Escape' && document.getElementById('detalleModal').style.display === 'flex') {
             closeDetailModal();
         }
     });
 
-    // Cerrar modal al hacer clic fuera
+    // Cerrar modal al hacer clic fuera (con delay para evitar cierre inmediato)
     document.getElementById('detalleModal').addEventListener('click', function(e) {
         if (e.target === this) {
             closeDetailModal();
@@ -242,11 +242,19 @@ function renderSummaryTable(data) {
     document.getElementById('dataContainer').innerHTML = html;
 }
 
-async function showMatricialView() {
+async function showMatricialView(event) {
+    // Prevenir propagación del evento para evitar que cierre el modal inmediatamente
+    if (event) {
+        event.stopPropagation();
+    }
+
     const year = document.getElementById('year').value;
 
-    // Mostrar modal
-    document.getElementById('detalleModal').style.display = 'flex';
+    // Mostrar modal con pequeño delay para evitar conflictos
+    setTimeout(() => {
+        document.getElementById('detalleModal').style.display = 'flex';
+    }, 10);
+
     document.getElementById('detalleContent').innerHTML = `
         <div class="text-center">
             <div class="spinner"></div>
