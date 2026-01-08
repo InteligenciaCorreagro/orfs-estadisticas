@@ -26,6 +26,12 @@ $pageTitle = 'Negociado Diario';
                     <?php endforeach; ?>
                 </select>
             </div>
+
+            <div style="margin-top: 20px;">
+                <button type="button" class="btn btn-primary" onclick="showMatricialView()" style="padding: 8px 20px;">
+                    <i class="fas fa-eye"></i> Ver Detalle Completo
+                </button>
+            </div>
         </div>
     </div>
 </div>
@@ -80,6 +86,11 @@ $pageTitle = 'Negociado Diario';
                     <select id="filterRueda" class="form-select" style="width: 200px;" onchange="applyFilters()">
                         <option value="">Todas las ruedas</option>
                     </select>
+                </div>
+
+                <div>
+                    <label for="filterCliente"><i class="fas fa-search"></i> Cliente:</label>
+                    <input type="text" id="filterCliente" class="form-control" style="width: 300px;" placeholder="Buscar por nombre de cliente..." oninput="applyFilters()">
                 </div>
 
                 <div style="margin-top: 20px;">
@@ -171,7 +182,6 @@ function renderSummaryTable(data) {
                         <th class="text-right"><i class="fas fa-dollar-sign"></i> Total Transado</th>
                         <th class="text-right"><i class="fas fa-coins"></i> Total Comisión</th>
                         <th class="text-right"><i class="fas fa-chart-line"></i> Margen %</th>
-                        <th class="text-center"><i class="fas fa-eye"></i> Acción</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -199,18 +209,13 @@ function renderSummaryTable(data) {
         totalGeneral.margen += totalMargen;
 
         html += `
-            <tr class="clickable-row" style="cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='#e8f5e9'" onmouseout="this.style.background=''">
+            <tr>
                 <td><strong>${row.trader}</strong></td>
                 <td class="text-right"><span class="badge" style="background: #27ae60; color: white; padding: 4px 10px; border-radius: 12px;">${row.total_clientes}</span></td>
                 <td class="text-right">${row.total_ruedas}</td>
                 <td class="text-right"><strong>${formatCurrency(totalTransado)}</strong></td>
                 <td class="text-right" style="color: #27ae60; font-weight: bold;">${formatCurrency(totalComision)}</td>
                 <td class="text-right" style="color: #27ae60; font-weight: bold;">${formatPercentage(margenPct)}</td>
-                <td class="text-center">
-                    <button class="btn btn-sm" style="background: #27ae60; color: white; border: none; padding: 6px 16px; border-radius: 6px; cursor: pointer;" onclick="showMatricialView()">
-                        <i class="fas fa-th"></i> Ver Detalle
-                    </button>
-                </td>
             </tr>
         `;
     });
@@ -225,7 +230,6 @@ function renderSummaryTable(data) {
             <td class="text-right">${formatCurrency(totalGeneral.transado)}</td>
             <td class="text-right">${formatCurrency(totalGeneral.comision)}</td>
             <td class="text-right">${formatPercentage(margenGeneralPct)}</td>
-            <td></td>
         </tr>
     `;
 
@@ -290,10 +294,12 @@ function populateRuedasFilter() {
 function applyFilters() {
     const mesFilter = document.getElementById('filterMes').value;
     const ruedaFilter = document.getElementById('filterRueda').value;
+    const clienteFilter = document.getElementById('filterCliente').value.toLowerCase().trim();
 
     filteredData = fullData.filter(row => {
         if (mesFilter && row.mes_num != mesFilter) return false;
         if (ruedaFilter && row.rueda_no != ruedaFilter) return false;
+        if (clienteFilter && !row.cliente.toLowerCase().includes(clienteFilter)) return false;
         return true;
     });
 
@@ -303,6 +309,7 @@ function applyFilters() {
 function clearFilters() {
     document.getElementById('filterMes').value = '';
     document.getElementById('filterRueda').value = '';
+    document.getElementById('filterCliente').value = '';
     filteredData = [...fullData];
     renderMatricialView();
 }
@@ -453,6 +460,7 @@ function closeDetailModal() {
     // Limpiar filtros
     document.getElementById('filterMes').value = '';
     document.getElementById('filterRueda').value = '';
+    document.getElementById('filterCliente').value = '';
 }
 </script>
 JS;
