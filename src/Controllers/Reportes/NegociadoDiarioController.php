@@ -147,8 +147,13 @@ class NegociadoDiarioController
     public function getResumenPorTrader(Request $request): void
     {
         $year = (int) $request->get('year', date('Y'));
+        $userRole = Session::get('user_role');
+        $traderName = Session::get('trader_name');
 
-        $data = $this->negociadoService->obtenerResumenPorTrader($year);
+        // Si es trader, solo puede ver su propia información
+        $corredor = $userRole === 'trader' ? $traderName : null;
+
+        $data = $this->negociadoService->obtenerResumenPorTrader($year, $corredor);
 
         $response = new Response();
         $response->success('Resumen por trader obtenido', $data);
@@ -160,6 +165,15 @@ class NegociadoDiarioController
     public function getDetalleMensualTrader(Request $request, string $trader): void
     {
         $year = (int) $request->get('year', date('Y'));
+        $userRole = Session::get('user_role');
+        $traderName = Session::get('trader_name');
+
+        // Si es trader, solo puede ver su propia información
+        if ($userRole === 'trader' && $trader !== $traderName) {
+            $response = new Response();
+            $response->error('No autorizado para ver información de otro trader', [], 403);
+            return;
+        }
 
         $data = $this->negociadoService->obtenerDetalleMensualPorTrader($year, $trader);
 
@@ -173,8 +187,13 @@ class NegociadoDiarioController
     public function getVistaMatricial(Request $request): void
     {
         $year = (int) $request->get('year', date('Y'));
+        $userRole = Session::get('user_role');
+        $traderName = Session::get('trader_name');
 
-        $data = $this->negociadoService->obtenerVistaMatricialNegociados($year);
+        // Si es trader, solo puede ver su propia información
+        $corredor = $userRole === 'trader' ? $traderName : null;
+
+        $data = $this->negociadoService->obtenerVistaMatricialNegociados($year, $corredor);
 
         $response = new Response();
         $response->success('Vista matricial obtenida', $data);

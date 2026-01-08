@@ -125,7 +125,7 @@ class NegociadoDiarioService
     /**
      * Obtener resumen agrupado por trader para vista de negociado diario
      */
-    public function obtenerResumenPorTrader(int $year): array
+    public function obtenerResumenPorTrader(int $year, ?string $corredor = null): array
     {
         $sql = "
             SELECT
@@ -137,11 +137,18 @@ class NegociadoDiarioService
                 SUM(comi_corr - comi_bna) AS total_margen
             FROM orfs_transactions
             WHERE year = :year
-            GROUP BY corredor
-            ORDER BY corredor ASC
         ";
 
-        return Database::fetchAll($sql, ['year' => $year]);
+        $params = ['year' => $year];
+
+        if ($corredor) {
+            $sql .= " AND corredor = :corredor";
+            $params['corredor'] = $corredor;
+        }
+
+        $sql .= " GROUP BY corredor ORDER BY corredor ASC";
+
+        return Database::fetchAll($sql, $params);
     }
 
     /**
@@ -176,16 +183,25 @@ class NegociadoDiarioService
      * Obtener vista matricial de negociados: Cliente x Rueda
      * Para mostrar todos los clientes con sus transacciones por rueda
      */
-    public function obtenerVistaMatricialNegociados(int $year): array
+    public function obtenerVistaMatricialNegociados(int $year, ?string $corredor = null): array
     {
         // Primero obtener todas las ruedas del año ordenadas
         $sqlRuedas = "
             SELECT DISTINCT rueda_no, fecha, mes, MONTH(fecha) AS mes_num
             FROM orfs_transactions
             WHERE year = :year
-            ORDER BY rueda_no ASC
         ";
-        $ruedas = Database::fetchAll($sqlRuedas, ['year' => $year]);
+
+        $paramsRuedas = ['year' => $year];
+
+        if ($corredor) {
+            $sqlRuedas .= " AND corredor = :corredor";
+            $paramsRuedas['corredor'] = $corredor;
+        }
+
+        $sqlRuedas .= " ORDER BY rueda_no ASC";
+
+        $ruedas = Database::fetchAll($sqlRuedas, $paramsRuedas);
 
         // Obtener todos los datos agrupados por cliente y rueda
         $sqlData = "
@@ -199,10 +215,18 @@ class NegociadoDiarioService
                 SUM(negociado) AS transado
             FROM orfs_transactions
             WHERE year = :year
-            GROUP BY nit, nombre, corredor, rueda_no, mes, mes_num
-            ORDER BY nombre ASC, rueda_no ASC
         ";
-        $data = Database::fetchAll($sqlData, ['year' => $year]);
+
+        $paramsData = ['year' => $year];
+
+        if ($corredor) {
+            $sqlData .= " AND corredor = :corredor";
+            $paramsData['corredor'] = $corredor;
+        }
+
+        $sqlData .= " GROUP BY nit, nombre, corredor, rueda_no, mes, mes_num ORDER BY nombre ASC, rueda_no ASC";
+
+        $data = Database::fetchAll($sqlData, $paramsData);
 
         return [
             'ruedas' => $ruedas,
