@@ -53,14 +53,14 @@ $pageTitle = 'Negociado Diario';
 
 <!-- Modal de detalle matricial -->
 <div id="detalleModal" class="modal-overlay" style="display: none;">
-    <div class="modal-container" style="max-width: 98%; max-height: 95vh;">
+    <div class="modal-container">
         <div class="modal-header">
             <h2 id="modalTitle"><i class="fas fa-th"></i> Negociado - Vista Matricial</h2>
             <button class="modal-close" onclick="closeDetailModal()">&times;</button>
         </div>
 
         <!-- Filtros dentro del modal -->
-        <div class="modal-filters" style="padding: 15px; background: #f8f9fa; border-bottom: 1px solid #dee2e6;">
+        <div class="modal-filters">
             <div class="d-flex gap-2 align-center" style="flex-wrap: wrap;">
                 <div>
                     <label for="filterMes"><i class="far fa-calendar-alt"></i> Mes:</label>
@@ -101,7 +101,7 @@ $pageTitle = 'Negociado Diario';
             </div>
         </div>
 
-        <div class="modal-body" style="overflow: auto; max-height: calc(95vh - 200px);">
+        <div class="modal-body">
             <div id="detalleContent">
                 <div class="text-center">
                     <div class="spinner"></div>
