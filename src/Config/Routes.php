@@ -111,13 +111,22 @@ class Routes
         Router::get('/trader/dashboard', [MiEstadisticaController::class, 'dashboard'], $traderMiddleware);
         Router::get('/trader/mis-transacciones', [MiEstadisticaController::class, 'misTransacciones'], $traderMiddleware);
         
-        // ==================== PÁGINA NO AUTORIZADA ====================
-        
+        // ==================== PÁGINAS DE ERROR ====================
+
         Router::get('/unauthorized', function() {
             http_response_code(403);
-            echo '<h1>403 - No Autorizado</h1>';
-            echo '<p>No tienes permisos para acceder a este recurso.</p>';
-            echo '<a href="/dashboard">Volver al Dashboard</a>';
+            Session::start();
+            $requestedUrl = $_SERVER['REQUEST_URI'] ?? '';
+            $userRole = Session::get('user_role', 'invitado');
+
+            require __DIR__ . '/../Views/errors/403.php';
+        });
+
+        Router::get('/404', function() {
+            http_response_code(404);
+            $requestedUrl = $_SERVER['REQUEST_URI'] ?? '';
+
+            require __DIR__ . '/../Views/errors/404.php';
         });
     }
     
@@ -197,6 +206,7 @@ class Routes
         
         Router::get('/api/trader/estadisticas', [MiEstadisticaController::class, 'getEstadisticas'], $traderMiddleware);
         Router::get('/api/trader/clientes', [MiEstadisticaController::class, 'getMisClientes'], $traderMiddleware);
+        Router::get('/api/trader/mis-clientes', [MiEstadisticaController::class, 'getMisClientes'], $traderMiddleware);
         Router::get('/api/trader/rentabilidad', [MiEstadisticaController::class, 'getMiRentabilidad'], $traderMiddleware);
     }
 }
