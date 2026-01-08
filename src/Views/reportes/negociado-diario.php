@@ -28,7 +28,7 @@ $pageTitle = 'Negociado Diario';
             </div>
 
             <div style="margin-top: 20px;">
-                <button type="button" class="btn btn-primary" onclick="showMatricialView(event); return false;" style="padding: 8px 20px;">
+                <button type="button" id="btnVerDetalle" class="btn btn-primary" style="padding: 8px 20px;">
                     <i class="fas fa-eye"></i> Ver Detalle Completo
                 </button>
             </div>
@@ -53,10 +53,10 @@ $pageTitle = 'Negociado Diario';
 
 <!-- Modal de detalle matricial -->
 <div id="detalleModal" class="modal-overlay" style="display: none;">
-    <div class="modal-container" onclick="event.stopPropagation(); return false;">
+    <div class="modal-container">
         <div class="modal-header">
             <h2 id="modalTitle"><i class="fas fa-th"></i> Negociado - Vista Matricial</h2>
-            <button class="modal-close" onclick="closeDetailModal(); return false;" type="button">&times;</button>
+            <button class="modal-close" id="closeModalBtn" type="button">&times;</button>
         </div>
 
         <!-- Filtros dentro del modal -->
@@ -124,32 +124,67 @@ let allRuedas = [];
 const MESES = ['', 'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
 
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('[Negociado Diario] DOM loaded');
+
     // Asegurar que el modal esté oculto al cargar
     const modal = document.getElementById('detalleModal');
     if (modal) {
         modal.style.display = 'none';
+        console.log('[Negociado Diario] Modal hidden on load');
+    }
+
+    // Event listener para el botón Ver Detalle Completo
+    const btnVerDetalle = document.getElementById('btnVerDetalle');
+    if (btnVerDetalle) {
+        btnVerDetalle.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('[Negociado Diario] Ver Detalle button clicked');
+            showMatricialView(e);
+        });
+    }
+
+    // Event listener para el botón de cerrar
+    const closeBtn = document.getElementById('closeModalBtn');
+    if (closeBtn) {
+        closeBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            console.log('[Negociado Diario] Close button clicked');
+            closeDetailModal();
+        });
+    }
+
+    // Cerrar modal con ESC
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            const modal = document.getElementById('detalleModal');
+            if (modal && modal.style.display === 'flex') {
+                console.log('[Negociado Diario] ESC pressed, closing modal');
+                closeDetailModal();
+            }
+        }
+    });
+
+    // Cerrar al hacer clic fuera del modal (en el overlay)
+    if (modal) {
+        modal.addEventListener('click', function(e) {
+            if (e.target === modal) {
+                console.log('[Negociado Diario] Clicked outside modal, closing');
+                closeDetailModal();
+            }
+        });
+    }
+
+    // Prevenir que clicks dentro del modal container cierren el modal
+    const modalContainer = modal?.querySelector('.modal-container');
+    if (modalContainer) {
+        modalContainer.addEventListener('click', function(e) {
+            e.stopPropagation();
+        });
     }
 
     // Cargar datos iniciales
     loadData();
-});
-
-// Cerrar modal con ESC
-document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape') {
-        const modal = document.getElementById('detalleModal');
-        if (modal && modal.style.display === 'flex') {
-            closeDetailModal();
-        }
-    }
-});
-
-// Event listener para cerrar al hacer clic fuera
-document.addEventListener('click', function(e) {
-    const modal = document.getElementById('detalleModal');
-    if (e.target === modal && modal.style.display === 'flex') {
-        closeDetailModal();
-    }
 });
 
 async function loadData() {
@@ -254,6 +289,8 @@ function renderSummaryTable(data) {
 }
 
 async function showMatricialView(event) {
+    console.log('[Negociado Diario] showMatricialView called');
+
     // Prevenir propagación del evento
     if (event) {
         event.stopPropagation();
@@ -262,6 +299,8 @@ async function showMatricialView(event) {
 
     const year = document.getElementById('year').value;
     const modal = document.getElementById('detalleModal');
+
+    console.log('[Negociado Diario] Year:', year);
 
     // Mostrar loading
     document.getElementById('detalleContent').innerHTML = `
@@ -274,19 +313,29 @@ async function showMatricialView(event) {
     // Mostrar modal
     if (modal) {
         modal.style.display = 'flex';
+        console.log('[Negociado Diario] Modal displayed');
     }
 
     try {
-        const response = await fetch(`/api/reportes/negociado-diario/matricial?year=${year}`, {
+        const url = `/api/reportes/negociado-diario/matricial?year=${year}`;
+        console.log('[Negociado Diario] Fetching:', url);
+
+        const response = await fetch(url, {
             headers: { 'X-Requested-With': 'XMLHttpRequest' }
         });
 
+        console.log('[Negociado Diario] Response status:', response.status);
+
         const result = await response.json();
+        console.log('[Negociado Diario] Response data:', result);
 
         if (result.success) {
             allRuedas = result.data.ruedas || [];
             fullData = result.data.data || [];
             filteredData = [...fullData];
+
+            console.log('[Negociado Diario] Ruedas count:', allRuedas.length);
+            console.log('[Negociado Diario] Data count:', fullData.length);
 
             // Poblar filtro de ruedas
             populateRuedasFilter();
@@ -294,11 +343,12 @@ async function showMatricialView(event) {
             // Renderizar vista matricial
             renderMatricialView();
         } else {
+            console.error('[Negociado Diario] API returned error:', result.message);
             document.getElementById('detalleContent').innerHTML =
                 '<p class="text-center text-danger"><i class="fas fa-exclamation-circle"></i> Error al cargar detalle</p>';
         }
     } catch (error) {
-        console.error('Error loading matricial view:', error);
+        console.error('[Negociado Diario] Error loading matricial view:', error);
         document.getElementById('detalleContent').innerHTML =
             '<p class="text-center text-danger"><i class="fas fa-wifi" style="text-decoration: line-through;"></i> Error de conexión</p>';
     }
@@ -337,7 +387,10 @@ function clearFilters() {
 }
 
 function renderMatricialView() {
+    console.log('[Negociado Diario] renderMatricialView called, filteredData length:', filteredData.length);
+
     if (filteredData.length === 0) {
+        console.warn('[Negociado Diario] No filtered data available');
         document.getElementById('detalleContent').innerHTML =
             '<p class="text-center text-muted"><i class="fas fa-filter"></i> No hay datos con los filtros seleccionados</p>';
         return;
@@ -474,7 +527,13 @@ function renderMatricialView() {
 }
 
 function closeDetailModal() {
-    document.getElementById('detalleModal').style.display = 'none';
+    console.log('[Negociado Diario] closeDetailModal called');
+    const modal = document.getElementById('detalleModal');
+    if (modal) {
+        modal.style.display = 'none';
+        console.log('[Negociado Diario] Modal closed');
+    }
+
     fullData = [];
     filteredData = [];
     allRuedas = [];
