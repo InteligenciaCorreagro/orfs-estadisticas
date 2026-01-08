@@ -27,7 +27,7 @@ if (!$user) {
                     <i class="fas fa-bars"></i>
                 </button>
                 <div class="logo">
-                    <a href="/dashboard" style="text-decoration: none; color: inherit;">
+                    <a href="<?= $user['role'] === 'trader' ? '/trader/dashboard' : '/dashboard' ?>" style="text-decoration: none; color: inherit;">
                         ORFS Estadisticas
                     </a>
                 </div>
@@ -52,9 +52,9 @@ if (!$user) {
         <aside class="sidebar">
             <nav class="sidebar-menu">
                 <ul>
-                    <li><a href="/dashboard"><i class="fas fa-home"></i> Dashboard</a></li>
-
                     <?php if ($user['role'] === 'admin'): ?>
+                        <li><a href="/dashboard"><i class="fas fa-home"></i> Dashboard</a></li>
+
                         <li class="menu-section"><span><i class="fas fa-cog"></i> ADMINISTRACION</span></li>
                         <li><a href="/admin/carga-archivo"><i class="fas fa-file-upload"></i> Cargar Archivo</a></li>
                         <li><a href="/admin/traders"><i class="fas fa-users"></i> Traders</a></li>

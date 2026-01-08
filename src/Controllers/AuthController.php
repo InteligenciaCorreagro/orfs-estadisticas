@@ -25,10 +25,15 @@ class AuthController
     {
         Session::start();
 
-        // Si ya está autenticado, redirigir al dashboard
+        // Si ya está autenticado, redirigir según rol
         if ($this->authService->check()) {
             $response = new Response();
-            $response->redirect('/dashboard');
+            $userRole = Session::get('user_role');
+            if ($userRole === 'trader') {
+                $response->redirect('/trader/dashboard');
+            } else {
+                $response->redirect('/dashboard');
+            }
             return;
         }
 
@@ -81,11 +86,16 @@ class AuthController
 
         if ($result['success']) {
             // Login exitoso - IMPORTANTE: Guardar sesión antes de redirigir
+            $userRole = Session::get('user_role');
             session_write_close();
 
-            // Redirigir al dashboard
+            // Redirigir según rol
             $response = new Response();
-            $response->redirect('/dashboard');
+            if ($userRole === 'trader') {
+                $response->redirect('/trader/dashboard');
+            } else {
+                $response->redirect('/dashboard');
+            }
         } else {
             // Login fallido
             if ($request->isAjax()) {

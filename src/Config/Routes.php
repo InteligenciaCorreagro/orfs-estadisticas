@@ -38,9 +38,13 @@ class Routes
         Router::post('/logout', [AuthController::class, 'logout']);
         
         // ==================== RUTAS AUTENTICADAS ====================
-        
-        // Dashboard
-        Router::get('/dashboard', [DashboardController::class, 'index'], [AuthMiddleware::class]);
+
+        // ==================== RUTAS ADMIN ====================
+
+        $adminMiddleware = [AuthMiddleware::class, new RoleMiddleware(['admin'])];
+
+        // Dashboard (solo admin)
+        Router::get('/dashboard', [DashboardController::class, 'index'], $adminMiddleware);
 
         // RUTA DE TEST
         Router::get('/test', function() {
@@ -54,9 +58,7 @@ class Routes
         // RUTA DE DEBUG
         Router::get('/debug', [DebugController::class, 'test'], [AuthMiddleware::class]);
 
-        // ==================== RUTAS ADMIN ====================
-        
-        $adminMiddleware = [AuthMiddleware::class, new RoleMiddleware(['admin'])];
+        // ==================== RUTAS ADMIN (continuación) ====================
         
         // Carga de archivos
         Router::get('/admin/carga-archivo', [CargaArchivoController::class, 'index'], $adminMiddleware);
@@ -128,13 +130,12 @@ class Routes
         Router::get('/api/auth/me', [AuthController::class, 'me'], [AuthMiddleware::class]);
         Router::post('/api/auth/change-password', [AuthController::class, 'changePassword'], [AuthMiddleware::class]);
         
-        // ==================== DASHBOARD API ====================
-        
-        Router::get('/api/dashboard', [DashboardController::class, 'getDashboardData'], [AuthMiddleware::class]);
-        
         // ==================== ADMIN API ====================
-        
+
         $adminMiddleware = [AuthMiddleware::class, new RoleMiddleware(['admin'])];
+
+        // Dashboard API (solo admin)
+        Router::get('/api/dashboard', [DashboardController::class, 'getDashboardData'], $adminMiddleware);
         
         // Traders
         Router::get('/api/admin/traders', [TraderController::class, 'index'], $adminMiddleware);
