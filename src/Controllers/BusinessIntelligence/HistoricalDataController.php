@@ -19,7 +19,7 @@ class HistoricalDataController extends Controller
     }
 
     /**
-     * Mostrar dashboard de inteligencia de negocios
+     * Mostrar página de archivos históricos
      */
     public function index(): void
     {
@@ -39,7 +39,7 @@ class HistoricalDataController extends Controller
             'availableYears' => [2021, 2022, 2023, 2024, 2025]
         ];
 
-        $this->render('business_intelligence/dashboard', $data);
+        $this->render('business_intelligence/archivos_historicos', $data);
     }
 
     /**
@@ -55,14 +55,14 @@ class HistoricalDataController extends Controller
             $year = $request->post('year');
             if (empty($year)) {
                 Session::flash('error', 'Debe seleccionar un año');
-                redirect('/bi/dashboard');
+                redirect('/bi/archivos-historicos');
                 return;
             }
 
             // Validar que se haya subido un archivo
             if (!isset($_FILES['file']) || $_FILES['file']['error'] !== UPLOAD_ERR_OK) {
                 Session::flash('error', 'Debe seleccionar un archivo válido');
-                redirect('/bi/dashboard');
+                redirect('/bi/archivos-historicos');
                 return;
             }
 
@@ -74,7 +74,7 @@ class HistoricalDataController extends Controller
 
             if (!in_array($extension, $allowedExtensions)) {
                 Session::flash('error', 'Solo se permiten archivos Excel (.xlsx, .xls) o CSV (.csv)');
-                redirect('/bi/dashboard');
+                redirect('/bi/archivos-historicos');
                 return;
             }
 
@@ -98,7 +98,7 @@ class HistoricalDataController extends Controller
             Session::flash('error', 'Error al subir el archivo: ' . $e->getMessage());
         }
 
-        redirect('/bi/dashboard');
+        redirect('/bi/archivos-historicos');
     }
 
     /**
@@ -123,7 +123,7 @@ class HistoricalDataController extends Controller
             Session::flash('error', 'Error al eliminar el archivo');
         }
 
-        redirect('/bi/dashboard');
+        redirect('/bi/archivos-historicos');
     }
 
     /**
@@ -138,7 +138,7 @@ class HistoricalDataController extends Controller
 
             if (!$upload) {
                 Session::flash('error', 'Archivo no encontrado');
-                redirect('/bi/dashboard');
+                redirect('/bi/archivos-historicos');
                 return;
             }
 
@@ -146,7 +146,7 @@ class HistoricalDataController extends Controller
 
             if (!file_exists($filePath)) {
                 Session::flash('error', 'El archivo físico no existe');
-                redirect('/bi/dashboard');
+                redirect('/bi/archivos-historicos');
                 return;
             }
 
@@ -160,7 +160,7 @@ class HistoricalDataController extends Controller
         } catch (\Exception $e) {
             logError('Error downloading historical file: ' . $e->getMessage());
             Session::flash('error', 'Error al descargar el archivo');
-            redirect('/bi/dashboard');
+            redirect('/bi/archivos-historicos');
         }
     }
 

@@ -116,10 +116,10 @@ class Routes
 
         $biMiddleware = [AuthMiddleware::class, new RoleMiddleware(['business_intelligence'])];
 
-        Router::get('/bi/dashboard', [HistoricalDataController::class, 'index'], $biMiddleware);
-        Router::post('/bi/upload', [HistoricalDataController::class, 'upload'], $biMiddleware);
-        Router::post('/bi/delete', [HistoricalDataController::class, 'delete'], $biMiddleware);
-        Router::get('/bi/download', [HistoricalDataController::class, 'download'], $biMiddleware);
+        Router::get('/bi/archivos-historicos', [HistoricalDataController::class, 'index'], $biMiddleware);
+        Router::post('/bi/archivos-historicos/upload', [HistoricalDataController::class, 'upload'], $biMiddleware);
+        Router::post('/bi/archivos-historicos/delete', [HistoricalDataController::class, 'delete'], $biMiddleware);
+        Router::get('/bi/archivos-historicos/download', [HistoricalDataController::class, 'download'], $biMiddleware);
 
         // ==================== PÁGINAS DE ERROR ====================
 

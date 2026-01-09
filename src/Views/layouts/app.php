@@ -31,7 +31,7 @@ if (!$user) {
                         if ($user['role'] === 'trader') {
                             echo '/trader/dashboard';
                         } elseif ($user['role'] === 'business_intelligence') {
-                            echo '/bi/dashboard';
+                            echo '/bi/archivos-historicos';
                         } else {
                             echo '/dashboard';
                         }
@@ -84,12 +84,9 @@ if (!$user) {
                     <?php endif; ?>
 
                     <?php if ($user['role'] === 'business_intelligence'): ?>
-                        <li><a href="/bi/dashboard"><i class="fas fa-brain"></i> Dashboard BI</a></li>
                         <li class="menu-section"><span><i class="fas fa-database"></i> DATOS HISTORICOS</span></li>
-                        <li><a href="/bi/dashboard"><i class="fas fa-file-archive"></i> Archivos Históricos</a></li>
-                    <?php endif; ?>
-
-                    <?php if ($user['role'] !== 'business_intelligence'): ?>
+                        <li><a href="/bi/archivos-historicos"><i class="fas fa-file-archive"></i> Archivos Históricos</a></li>
+                    <?php else: ?>
                         <li class="menu-section"><span><i class="fas fa-chart-bar"></i> REPORTES</span></li>
                         <li><a href="/reportes/orfs"><i class="fas fa-table"></i> ORFS</a></li>
                         <li><a href="/reportes/margen"><i class="fas fa-percentage"></i> Margen</a></li>

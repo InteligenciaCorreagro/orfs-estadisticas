@@ -1,6 +1,6 @@
 <?php
-// src/Views/business_intelligence/dashboard.php
-$pageTitle = 'Inteligencia de Negocios - Archivos Históricos';
+// src/Views/business_intelligence/archivos_historicos.php
+$pageTitle = 'Archivos Históricos';
 ob_start();
 ?>
 
@@ -9,10 +9,10 @@ ob_start();
     <div class="row mb-4">
         <div class="col-12">
             <h1 class="h3 mb-0">
-                <i class="fas fa-brain me-2"></i>
-                Inteligencia de Negocios
+                <i class="fas fa-history me-2"></i>
+                Archivos Históricos
             </h1>
-            <p class="text-muted">Gestión de archivos históricos anuales</p>
+            <p class="text-muted">Gestión de archivos históricos anuales (2021-2025)</p>
         </div>
     </div>
 
@@ -44,7 +44,7 @@ ob_start();
                     </h5>
                 </div>
                 <div class="card-body">
-                    <form action="/bi/upload" method="POST" enctype="multipart/form-data">
+                    <form action="/bi/archivos-historicos/upload" method="POST" enctype="multipart/form-data">
                         <?= csrfField() ?>
 
                         <div class="row">
@@ -184,7 +184,7 @@ ob_start();
                                         </td>
                                         <td class="text-center">
                                             <div class="btn-group" role="group">
-                                                <a href="/bi/download?id=<?= $upload['id'] ?>"
+                                                <a href="/bi/archivos-historicos/download?id=<?= $upload['id'] ?>"
                                                    class="btn btn-sm btn-outline-primary"
                                                    title="Descargar">
                                                     <i class="fas fa-download"></i>
@@ -228,7 +228,7 @@ ob_start();
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                <form id="deleteForm" method="POST" action="/bi/delete" style="display: inline;">
+                <form id="deleteForm" method="POST" action="/bi/archivos-historicos/delete" style="display: inline;">
                     <?= csrfField() ?>
                     <input type="hidden" name="id" id="deleteId">
                     <button type="submit" class="btn btn-danger">

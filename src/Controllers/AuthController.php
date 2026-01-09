@@ -32,7 +32,7 @@ class AuthController
             if ($userRole === 'trader') {
                 $response->redirect('/trader/dashboard');
             } elseif ($userRole === 'business_intelligence') {
-                $response->redirect('/bi/dashboard');
+                $response->redirect('/bi/archivos-historicos');
             } else {
                 $response->redirect('/dashboard');
             }
@@ -96,7 +96,7 @@ class AuthController
             if ($userRole === 'trader') {
                 $response->redirect('/trader/dashboard');
             } elseif ($userRole === 'business_intelligence') {
-                $response->redirect('/bi/dashboard');
+                $response->redirect('/bi/archivos-historicos');
             } else {
                 $response->redirect('/dashboard');
             }
