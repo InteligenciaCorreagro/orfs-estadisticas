@@ -27,7 +27,15 @@ if (!$user) {
                     <i class="fas fa-bars"></i>
                 </button>
                 <div class="logo">
-                    <a href="<?= $user['role'] === 'trader' ? '/trader/dashboard' : '/dashboard' ?>" style="text-decoration: none; color: inherit;">
+                    <a href="<?php
+                        if ($user['role'] === 'trader') {
+                            echo '/trader/dashboard';
+                        } elseif ($user['role'] === 'business_intelligence') {
+                            echo '/bi/dashboard';
+                        } else {
+                            echo '/dashboard';
+                        }
+                    ?>" style="text-decoration: none; color: inherit;">
                         ORFS Estadisticas
                     </a>
                 </div>
@@ -39,8 +47,22 @@ if (!$user) {
                             <small>(<?= e($user['trader_name']) ?>)</small>
                         <?php endif; ?>
                     </span>
-                    <span class="user-role badge badge-<?= $user['role'] === 'admin' ? 'primary' : 'secondary' ?>">
-                        <?= ucfirst($user['role']) ?>
+                    <span class="user-role badge badge-<?php
+                        if ($user['role'] === 'admin') {
+                            echo 'primary';
+                        } elseif ($user['role'] === 'business_intelligence') {
+                            echo 'info';
+                        } else {
+                            echo 'secondary';
+                        }
+                    ?>">
+                        <?php
+                        if ($user['role'] === 'business_intelligence') {
+                            echo 'Inteligencia de Negocios';
+                        } else {
+                            echo ucfirst($user['role']);
+                        }
+                        ?>
                     </span>
                     <a href="/logout" class="btn btn-sm btn-secondary">Cerrar Sesion</a>
                 </div>
@@ -61,12 +83,20 @@ if (!$user) {
                         <li><a href="/admin/usuarios"><i class="fas fa-user-shield"></i> Usuarios</a></li>
                     <?php endif; ?>
 
-                    <li class="menu-section"><span><i class="fas fa-chart-bar"></i> REPORTES</span></li>
-                    <li><a href="/reportes/orfs"><i class="fas fa-table"></i> ORFS</a></li>
-                    <li><a href="/reportes/margen"><i class="fas fa-percentage"></i> Margen</a></li>
-                    <li><a href="/reportes/rueda"><i class="fas fa-circle-notch"></i> Ruedas</a></li>
-                    <li><a href="/reportes/negociado-diario"><i class="fas fa-calendar-day"></i> Negociado Diario</a></li>
-                    <li><a href="/reportes/consolidado"><i class="fas fa-file-contract"></i> Consolidado</a></li>
+                    <?php if ($user['role'] === 'business_intelligence'): ?>
+                        <li><a href="/bi/dashboard"><i class="fas fa-brain"></i> Dashboard BI</a></li>
+                        <li class="menu-section"><span><i class="fas fa-database"></i> DATOS HISTORICOS</span></li>
+                        <li><a href="/bi/dashboard"><i class="fas fa-file-archive"></i> Archivos Históricos</a></li>
+                    <?php endif; ?>
+
+                    <?php if ($user['role'] !== 'business_intelligence'): ?>
+                        <li class="menu-section"><span><i class="fas fa-chart-bar"></i> REPORTES</span></li>
+                        <li><a href="/reportes/orfs"><i class="fas fa-table"></i> ORFS</a></li>
+                        <li><a href="/reportes/margen"><i class="fas fa-percentage"></i> Margen</a></li>
+                        <li><a href="/reportes/rueda"><i class="fas fa-circle-notch"></i> Ruedas</a></li>
+                        <li><a href="/reportes/negociado-diario"><i class="fas fa-calendar-day"></i> Negociado Diario</a></li>
+                        <li><a href="/reportes/consolidado"><i class="fas fa-file-contract"></i> Consolidado</a></li>
+                    <?php endif; ?>
 
                     <?php if ($user['role'] === 'trader'): ?>
                         <li class="menu-section"><span><i class="fas fa-user"></i> MI CUENTA</span></li>

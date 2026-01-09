@@ -288,8 +288,8 @@ function renderSummaryTable(data) {
                         <th><i class="fas fa-id-card"></i> NIT</th>
                         <th><i class="fas fa-building"></i> Cliente</th>
                         <th class="text-right"><i class="fas fa-dollar-sign"></i> Total Transado</th>
-                        <th class="text-right"><i class="fas fa-percentage"></i> Comisión %</th>
-                        <th class="text-right"><i class="fas fa-chart-line"></i> Margen %</th>
+                        <th class="text-right"><i class="fas fa-dollar-sign"></i> Comisión COP</th>
+                        <th class="text-right"><i class="fas fa-chart-line"></i> Margen COP</th>
                         <th class="text-center"><i class="fas fa-expand-alt"></i> Ver Detalle</th>
                     </tr>
                 </thead>
@@ -300,8 +300,6 @@ function renderSummaryTable(data) {
         const totalTransado = parseFloat(row.total_transado) || 0;
         const totalComision = parseFloat(row.total_comision) || 0;
         const totalMargen = parseFloat(row.total_margen) || 0;
-        const comisionPct = totalTransado > 0 ? totalComision / totalTransado : 0;
-        const margenPct = totalTransado > 0 ? totalMargen / totalTransado : 0;
 
         html += `
             <tr class="clickable-row" onclick="showDetail(${index})">
@@ -309,8 +307,8 @@ function renderSummaryTable(data) {
                 <td><span style="font-family: monospace; background: #F8F9FA; padding: 2px 6px; border-radius: 4px; font-size: 11px;">${row.nit}</span></td>
                 <td><strong>${row.cliente}</strong></td>
                 <td class="text-right"><strong>${formatCurrency(totalTransado)}</strong></td>
-                <td class="text-right" style="color: #27ae60; font-weight: bold;">${formatPercentage(comisionPct)}</td>
-                <td class="text-right" style="color: #27ae60; font-weight: bold;">${formatPercentage(margenPct)}</td>
+                <td class="text-right" style="color: #27ae60; font-weight: bold;">${formatCurrency(totalComision)}</td>
+                <td class="text-right" style="color: #27ae60; font-weight: bold;">${formatCurrency(totalMargen)}</td>
                 <td class="text-center">
                     <button class="btn btn-sm" style="background: #27ae60; color: white; border: none; border-radius: 6px; padding: 6px 12px;">
                         <i class="fas fa-eye"></i> Ver
@@ -370,8 +368,8 @@ function showDetail(index) {
                     </tr>
                     <tr>
                         <th>Transado</th>
-                        <th style="background: rgba(39, 174, 96, 0.2);">Comisión %</th>
-                        <th style="background: rgba(39, 174, 96, 0.3);">Margen %</th>
+                        <th style="background: rgba(39, 174, 96, 0.2);">Comisión COP</th>
+                        <th style="background: rgba(39, 174, 96, 0.3);">Margen COP</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -382,8 +380,6 @@ function showDetail(index) {
         const transado = parseFloat(row[mes + '_transado']) || 0;
         const comision = parseFloat(row[mes + '_comision']) || 0;
         const margen = parseFloat(row[mes + '_margen']) || 0;
-        const comisionPct = transado > 0 ? comision / transado : 0;
-        const margenPct = transado > 0 ? margen / transado : 0;
 
         html += `
             <tr>
@@ -391,8 +387,8 @@ function showDetail(index) {
                     <i class="far fa-calendar"></i> ${mes.charAt(0).toUpperCase() + mes.slice(1)}
                 </td>
                 <td class="text-right">${transado > 0 ? formatCurrency(transado) : '-'}</td>
-                <td class="text-right" style="color: #27ae60; font-weight: 600;">${transado > 0 ? formatPercentage(comisionPct) : '-'}</td>
-                <td class="text-right" style="color: #27ae60; font-weight: 600;">${transado > 0 ? formatPercentage(margenPct) : '-'}</td>
+                <td class="text-right" style="color: #27ae60; font-weight: 600;">${transado > 0 ? formatCurrency(comision) : '-'}</td>
+                <td class="text-right" style="color: #27ae60; font-weight: 600;">${transado > 0 ? formatCurrency(margen) : '-'}</td>
             </tr>
         `;
     });
@@ -401,15 +397,13 @@ function showDetail(index) {
     const totalTransado = parseFloat(row.total_transado) || 0;
     const totalComision = parseFloat(row.total_comision) || 0;
     const totalMargen = parseFloat(row.total_margen) || 0;
-    const totalComisionPct = totalTransado > 0 ? totalComision / totalTransado : 0;
-    const totalMargenPct = totalTransado > 0 ? totalMargen / totalTransado : 0;
 
     html += `
                 <tr style="background: #27ae60; color: white; font-weight: bold;">
                     <td style="border-right: 2px solid white;"><i class="fas fa-calculator"></i> TOTAL</td>
                     <td class="text-right">${formatCurrency(totalTransado)}</td>
-                    <td class="text-right">${formatPercentage(totalComisionPct)}</td>
-                    <td class="text-right">${formatPercentage(totalMargenPct)}</td>
+                    <td class="text-right">${formatCurrency(totalComision)}</td>
+                    <td class="text-right">${formatCurrency(totalMargen)}</td>
                 </tr>
             </tbody>
         </table>

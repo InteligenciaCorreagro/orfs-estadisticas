@@ -21,6 +21,7 @@ use App\Controllers\Reportes\RuedaController;
 use App\Controllers\Reportes\NegociadoDiarioController;
 use App\Controllers\Reportes\ConsolidadoController;
 use App\Controllers\Trader\MiEstadisticaController;
+use App\Controllers\BusinessIntelligence\HistoricalDataController;
 
 class Routes
 {
@@ -105,12 +106,21 @@ class Routes
         Router::get('/reportes/consolidado', [ConsolidadoController::class, 'index'], $reportesMiddleware);
         
         // ==================== TRADER ====================
-        
+
         $traderMiddleware = [AuthMiddleware::class, new RoleMiddleware(['trader'])];
-        
+
         Router::get('/trader/dashboard', [MiEstadisticaController::class, 'dashboard'], $traderMiddleware);
         Router::get('/trader/mis-transacciones', [MiEstadisticaController::class, 'misTransacciones'], $traderMiddleware);
-        
+
+        // ==================== BUSINESS INTELLIGENCE ====================
+
+        $biMiddleware = [AuthMiddleware::class, new RoleMiddleware(['business_intelligence'])];
+
+        Router::get('/bi/dashboard', [HistoricalDataController::class, 'index'], $biMiddleware);
+        Router::post('/bi/upload', [HistoricalDataController::class, 'upload'], $biMiddleware);
+        Router::post('/bi/delete', [HistoricalDataController::class, 'delete'], $biMiddleware);
+        Router::get('/bi/download', [HistoricalDataController::class, 'download'], $biMiddleware);
+
         // ==================== PÁGINAS DE ERROR ====================
 
         Router::get('/unauthorized', function() {
@@ -201,12 +211,18 @@ class Routes
         Router::get('/api/reportes/consolidado/resumen-ejecutivo', [ConsolidadoController::class, 'getResumenEjecutivo'], $reportesMiddleware);
         
         // ==================== TRADER API ====================
-        
+
         $traderMiddleware = [AuthMiddleware::class, new RoleMiddleware(['trader'])];
-        
+
         Router::get('/api/trader/estadisticas', [MiEstadisticaController::class, 'getEstadisticas'], $traderMiddleware);
         Router::get('/api/trader/clientes', [MiEstadisticaController::class, 'getMisClientes'], $traderMiddleware);
         Router::get('/api/trader/mis-clientes', [MiEstadisticaController::class, 'getMisClientes'], $traderMiddleware);
         Router::get('/api/trader/rentabilidad', [MiEstadisticaController::class, 'getMiRentabilidad'], $traderMiddleware);
+
+        // ==================== BUSINESS INTELLIGENCE API ====================
+
+        $biMiddleware = [AuthMiddleware::class, new RoleMiddleware(['business_intelligence'])];
+
+        Router::get('/api/bi/stats', [HistoricalDataController::class, 'getStats'], $biMiddleware);
     }
 }

@@ -31,6 +31,8 @@ class AuthController
             $userRole = Session::get('user_role');
             if ($userRole === 'trader') {
                 $response->redirect('/trader/dashboard');
+            } elseif ($userRole === 'business_intelligence') {
+                $response->redirect('/bi/dashboard');
             } else {
                 $response->redirect('/dashboard');
             }
@@ -93,6 +95,8 @@ class AuthController
             $response = new Response();
             if ($userRole === 'trader') {
                 $response->redirect('/trader/dashboard');
+            } elseif ($userRole === 'business_intelligence') {
+                $response->redirect('/bi/dashboard');
             } else {
                 $response->redirect('/dashboard');
             }

@@ -169,6 +169,14 @@ function isTrader(): bool
 }
 
 /**
+ * Verificar si es inteligencia de negocios
+ */
+function isBusinessIntelligence(): bool
+{
+    return hasRole('business_intelligence');
+}
+
+/**
  * Generar token CSRF
  */
 function csrfToken(): string

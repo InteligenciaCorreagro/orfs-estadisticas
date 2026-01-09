@@ -275,24 +275,21 @@ function renderDetalle(data) {
                                     <th><i class="fas fa-building"></i> Cliente</th>
                                     <th><i class="fas fa-id-card"></i> NIT</th>
                                     <th class="text-right"><i class="fas fa-dollar-sign"></i> Transado</th>
-                                    <th class="text-right"><i class="fas fa-percentage"></i> Comisión %</th>
-                                    <th class="text-right"><i class="fas fa-chart-line"></i> Margen %</th>
+                                    <th class="text-right"><i class="fas fa-dollar-sign"></i> Comisión COP</th>
+                                    <th class="text-right"><i class="fas fa-chart-line"></i> Margen COP</th>
                                 </tr>
                             </thead>
                             <tbody>
         `;
 
         group.clientes.forEach(cliente => {
-            const comisionPct = parseFloat(cliente.comision) / parseFloat(cliente.transado);
-            const margenPct = parseFloat(cliente.margen) / parseFloat(cliente.transado);
-
             html += `
                 <tr style="font-size: 11px;">
                     <td>${cliente.cliente}</td>
                     <td><span style="font-family: monospace; background: #F8F9FA; padding: 2px 8px; border-radius: 4px; font-size: 10px;">${cliente.nit}</span></td>
                     <td class="text-right">${formatCurrency(cliente.transado)}</td>
-                    <td class="text-right" style="color: #27ae60; font-weight: 600;">${formatPercentage(comisionPct)}</td>
-                    <td class="text-right" style="color: #27ae60; font-weight: 600;">${formatPercentage(margenPct)}</td>
+                    <td class="text-right" style="color: #27ae60; font-weight: 600;">${formatCurrency(cliente.comision)}</td>
+                    <td class="text-right" style="color: #27ae60; font-weight: 600;">${formatCurrency(cliente.margen)}</td>
                 </tr>
             `;
         });
