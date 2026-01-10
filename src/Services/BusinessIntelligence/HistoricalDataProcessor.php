@@ -4,7 +4,6 @@
 namespace App\Services\BusinessIntelligence;
 
 use App\Core\Database;
-use App\Services\Excel\ExcelReader;
 
 class HistoricalDataProcessor
 {
@@ -15,83 +14,50 @@ class HistoricalDataProcessor
     {
         // Aumentar límite de memoria temporalmente para archivos grandes
         $originalMemoryLimit = ini_get('memory_limit');
-        ini_set('memory_limit', '512M');
+        ini_set('memory_limit', '1024M');
+
+        $insertedCount = 0;
+        $allErrors = [];
 
         try {
-            // Leer archivo Excel/CSV
-            $excelReader = new ExcelReader($filePath);
-            $data = $excelReader->load()->toAssociativeArray();
+            // Usar ChunkedExcelReader para leer el archivo por chunks
+            $chunkedReader = new ChunkedExcelReader($filePath, 100);
 
-            if (empty($data)) {
-                return [
-                    'success' => false,
-                    'message' => 'El archivo está vacío o no se pudo leer'
-                ];
-            }
-
-            // Verificar que tenga las columnas esperadas
-            // Nota: ExcelReader convierte headers a minúsculas
-            $requiredColumns = ['reasig', 'nit', 'nombre', 'corredor', 'fecha', 'rueda_no', 'negociado', 'mes'];
-            $headers = array_keys($data[0]);
-
-            $missingColumns = [];
-            foreach ($requiredColumns as $col) {
-                if (!in_array($col, $headers)) {
-                    $missingColumns[] = $col;
-                }
-            }
-
-            if (!empty($missingColumns)) {
-                return [
-                    'success' => false,
-                    'message' => 'Faltan columnas requeridas: ' . implode(', ', $missingColumns)
-                ];
-            }
-
-            // Procesar en lotes para mejor rendimiento de memoria
-            $batchSize = 100;
-            $insertedCount = 0;
-            $errors = [];
-            $totalRows = count($data);
-
-            for ($offset = 0; $offset < $totalRows; $offset += $batchSize) {
-                // Iniciar transacción para este lote
+            // Definir el callback para procesar cada chunk
+            $results = $chunkedReader->processInChunks(function($chunkData, &$results) use ($year, &$insertedCount, &$allErrors) {
+                // Iniciar transacción para este chunk
                 Database::beginTransaction();
 
                 try {
-                    $batch = array_slice($data, $offset, $batchSize);
-
-                    foreach ($batch as $index => $row) {
-                        $actualIndex = $offset + $index;
-
+                    foreach ($chunkData as $index => $row) {
                         try {
-                            // Preparar datos para insertar (columnas en minúsculas porque ExcelReader las convierte)
-                    $transaction = [
-                        'reasig' => $row['reasig'] ?? null,
-                        'nit' => $row['nit'] ?? '',
-                        'nombre' => $row['nombre'] ?? '',
-                        'corredor' => $row['corredor'] ?? '',
-                        'comi_porcentual' => floatval($row['comi_porcentual'] ?? 0),
-                        'ciudad' => $row['ciudad'] ?? null,
-                        'fecha' => $this->parseDate($row['fecha'] ?? ''),
-                        'rueda_no' => intval($row['rueda_no'] ?? 0),
-                        'negociado' => floatval($row['negociado'] ?? 0),
-                        'comi_bna' => floatval($row['comi_bna'] ?? 0),
-                        'campo_209' => floatval($row['246'] ?? 0),
-                        'comi_corr' => floatval($row['comi_corr'] ?? 0),
-                        'iva_bna' => floatval($row['iva_bna'] ?? 0),
-                        'iva_comi' => floatval($row['iva_comi'] ?? 0),
-                        'iva_cama' => floatval($row['iva_cama'] ?? 0),
-                        'facturado' => floatval($row['facturado'] ?? 0),
-                        'mes' => $row['mes'] ?? '',
-                        'comi_corr_neto' => floatval($row['comi_corr_neto'] ?? 0),
-                        'year' => $year // El año viene del parámetro
-                    ];
+                            // Preparar datos para insertar (columnas en minúsculas)
+                            $transaction = [
+                                'reasig' => $row['reasig'] ?? null,
+                                'nit' => $row['nit'] ?? '',
+                                'nombre' => $row['nombre'] ?? '',
+                                'corredor' => $row['corredor'] ?? '',
+                                'comi_porcentual' => floatval($row['comi_porcentual'] ?? 0),
+                                'ciudad' => $row['ciudad'] ?? null,
+                                'fecha' => $this->parseDate($row['fecha'] ?? ''),
+                                'rueda_no' => intval($row['rueda_no'] ?? 0),
+                                'negociado' => floatval($row['negociado'] ?? 0),
+                                'comi_bna' => floatval($row['comi_bna'] ?? 0),
+                                'campo_209' => floatval($row['246'] ?? 0),
+                                'comi_corr' => floatval($row['comi_corr'] ?? 0),
+                                'iva_bna' => floatval($row['iva_bna'] ?? 0),
+                                'iva_comi' => floatval($row['iva_comi'] ?? 0),
+                                'iva_cama' => floatval($row['iva_cama'] ?? 0),
+                                'facturado' => floatval($row['facturado'] ?? 0),
+                                'mes' => $row['mes'] ?? '',
+                                'comi_corr_neto' => floatval($row['comi_corr_neto'] ?? 0),
+                                'year' => $year
+                            ];
 
                             // Validar datos requeridos
                             if (empty($transaction['nit']) || empty($transaction['nombre']) ||
                                 empty($transaction['corredor']) || empty($transaction['fecha'])) {
-                                $errors[] = "Fila " . ($actualIndex + 2) . ": Datos requeridos faltantes";
+                                $allErrors[] = "Fila {$index}: Datos requeridos faltantes";
                                 continue;
                             }
 
@@ -107,50 +73,45 @@ class HistoricalDataProcessor
 
                             Database::query($sql, $transaction);
                             $insertedCount++;
+                            $results['processed']++;
 
                         } catch (\Exception $e) {
-                            $errors[] = "Fila " . ($actualIndex + 2) . ": " . $e->getMessage();
+                            $allErrors[] = "Fila {$index}: " . $e->getMessage();
                         }
                     }
 
-                    // Commit del lote si todo salió bien
+                    // Commit del chunk
                     Database::commit();
 
-                    // Liberar memoria del lote procesado
-                    unset($batch);
-
                 } catch (\Exception $e) {
-                    // Rollback del lote en caso de error
+                    // Rollback del chunk en caso de error
                     try {
                         Database::rollback();
                     } catch (\Exception $rollbackException) {
                         // Ignorar errores de rollback
                     }
 
-                    $errors[] = "Error en lote (filas " . ($offset + 1) . " a " . ($offset + $batchSize) . "): " . $e->getMessage();
+                    $allErrors[] = "Error en chunk: " . $e->getMessage();
                 }
-            }
+            });
 
             $message = "Procesamiento completado. {$insertedCount} registros insertados";
-            if (!empty($errors)) {
-                $message .= ". " . count($errors) . " errores encontrados";
+            if (!empty($allErrors)) {
+                $message .= ". " . count($allErrors) . " errores encontrados";
+            }
+
+            if (!empty($results['errors'])) {
+                $allErrors = array_merge($allErrors, $results['errors']);
             }
 
             return [
                 'success' => true,
                 'message' => $message,
                 'inserted' => $insertedCount,
-                'errors' => $errors
+                'errors' => $allErrors
             ];
 
         } catch (\Exception $e) {
-            // Rollback en caso de error
-            try {
-                Database::rollback();
-            } catch (\Exception $rollbackException) {
-                // Ignorar errores de rollback
-            }
-
             logError('Error processing historical file: ' . $e->getMessage());
             return [
                 'success' => false,
