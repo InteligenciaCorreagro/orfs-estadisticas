@@ -54,12 +54,22 @@ class HistoricalUploadService
                 'notes' => $notes
             ];
 
-            Database::query($sql, $params);
+            try {
+                Database::query($sql, $params);
 
-            return [
-                'success' => true,
-                'message' => 'Archivo histórico de ' . $year . ' subido exitosamente'
-            ];
+                return [
+                    'success' => true,
+                    'message' => 'Archivo histórico de ' . $year . ' subido exitosamente'
+                ];
+            } catch (\PDOException $e) {
+                // Si hay error en la BD, eliminar el archivo físico
+                if (file_exists($filePath)) {
+                    unlink($filePath);
+                }
+
+                logError('Error al guardar en BD: ' . $e->getMessage());
+                throw new \Exception('Error al guardar en base de datos: ' . $e->getMessage());
+            }
 
         } catch (\Exception $e) {
             logError('Error in uploadHistoricalFile: ' . $e->getMessage());

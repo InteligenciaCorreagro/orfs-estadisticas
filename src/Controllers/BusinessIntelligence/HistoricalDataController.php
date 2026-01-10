@@ -114,10 +114,16 @@ class HistoricalDataController
     public function delete(Request $request): void
     {
         Session::start();
-        $id = $request->get('id');
+        $id = $request->post('id'); // Cambiar de get a post
+
+        if (!$id) {
+            Session::flash('error', 'ID de archivo no especificado');
+            redirect('/bi/archivos-historicos');
+            return;
+        }
 
         try {
-            $result = $this->uploadService->deleteUpload($id);
+            $result = $this->uploadService->deleteUpload((int)$id);
 
             if ($result['success']) {
                 Session::flash('success', $result['message']);
