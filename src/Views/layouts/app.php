@@ -30,8 +30,6 @@ if (!$user) {
                     <a href="<?php
                         if ($user['role'] === 'trader') {
                             echo '/trader/dashboard';
-                        } elseif ($user['role'] === 'business_intelligence') {
-                            echo '/bi/archivos-historicos';
                         } else {
                             echo '/dashboard';
                         }
@@ -74,19 +72,27 @@ if (!$user) {
         <aside class="sidebar">
             <nav class="sidebar-menu">
                 <ul>
-                    <?php if ($user['role'] === 'admin'): ?>
+                    <?php if ($user['role'] === 'admin' || $user['role'] === 'business_intelligence'): ?>
                         <li><a href="/dashboard"><i class="fas fa-home"></i> Dashboard</a></li>
 
                         <li class="menu-section"><span><i class="fas fa-cog"></i> ADMINISTRACION</span></li>
                         <li><a href="/admin/carga-archivo"><i class="fas fa-file-upload"></i> Cargar Archivo</a></li>
                         <li><a href="/admin/traders"><i class="fas fa-users"></i> Traders</a></li>
                         <li><a href="/admin/usuarios"><i class="fas fa-user-shield"></i> Usuarios</a></li>
+
+                        <?php if ($user['role'] === 'business_intelligence'): ?>
+                            <li><a href="/bi/archivos-historicos"><i class="fas fa-file-archive"></i> Archivos Históricos</a></li>
+                        <?php endif; ?>
+
+                        <li class="menu-section"><span><i class="fas fa-chart-bar"></i> REPORTES</span></li>
+                        <li><a href="/reportes/orfs"><i class="fas fa-table"></i> ORFS</a></li>
+                        <li><a href="/reportes/margen"><i class="fas fa-percentage"></i> Margen</a></li>
+                        <li><a href="/reportes/rueda"><i class="fas fa-circle-notch"></i> Ruedas</a></li>
+                        <li><a href="/reportes/negociado-diario"><i class="fas fa-calendar-day"></i> Negociado Diario</a></li>
+                        <li><a href="/reportes/consolidado"><i class="fas fa-file-contract"></i> Consolidado</a></li>
                     <?php endif; ?>
 
-                    <?php if ($user['role'] === 'business_intelligence'): ?>
-                        <li class="menu-section"><span><i class="fas fa-database"></i> DATOS HISTORICOS</span></li>
-                        <li><a href="/bi/archivos-historicos"><i class="fas fa-file-archive"></i> Archivos Históricos</a></li>
-                    <?php else: ?>
+                    <?php if ($user['role'] === 'trader'): ?>
                         <li class="menu-section"><span><i class="fas fa-chart-bar"></i> REPORTES</span></li>
                         <li><a href="/reportes/orfs"><i class="fas fa-table"></i> ORFS</a></li>
                         <li><a href="/reportes/margen"><i class="fas fa-percentage"></i> Margen</a></li>

@@ -42,9 +42,9 @@ class Routes
 
         // ==================== RUTAS ADMIN ====================
 
-        $adminMiddleware = [AuthMiddleware::class, new RoleMiddleware(['admin'])];
+        $adminMiddleware = [AuthMiddleware::class, new RoleMiddleware(['admin', 'business_intelligence'])];
 
-        // Dashboard (solo admin)
+        // Dashboard (admin y business_intelligence)
         Router::get('/dashboard', [DashboardController::class, 'index'], $adminMiddleware);
 
         // RUTA DE TEST
@@ -151,9 +151,9 @@ class Routes
         
         // ==================== ADMIN API ====================
 
-        $adminMiddleware = [AuthMiddleware::class, new RoleMiddleware(['admin'])];
+        $adminMiddleware = [AuthMiddleware::class, new RoleMiddleware(['admin', 'business_intelligence'])];
 
-        // Dashboard API (solo admin)
+        // Dashboard API (admin y business_intelligence)
         Router::get('/api/dashboard', [DashboardController::class, 'getDashboardData'], $adminMiddleware);
         
         // Traders
