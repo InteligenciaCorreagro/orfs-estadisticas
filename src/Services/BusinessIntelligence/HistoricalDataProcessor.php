@@ -14,7 +14,7 @@ class HistoricalDataProcessor
     {
         // Aumentar límite de memoria temporalmente para archivos grandes
         $originalMemoryLimit = ini_get('memory_limit');
-        ini_set('memory_limit', '512M');
+        ini_set('memory_limit', '2048M');
 
         // Optimizar configuración de MySQL para inserciones masivas
         try {
@@ -29,8 +29,8 @@ class HistoricalDataProcessor
         $allErrors = [];
 
         try {
-            // Usar ChunkedExcelReader con chunks más grandes (500 filas)
-            $chunkedReader = new ChunkedExcelReader($filePath, 500);
+            // Usar ChunkedExcelReader con chunks de 200 filas
+            $chunkedReader = new ChunkedExcelReader($filePath, 200);
 
             // Preparar el statement una vez fuera del loop
             $sql = "INSERT INTO orfs_transactions

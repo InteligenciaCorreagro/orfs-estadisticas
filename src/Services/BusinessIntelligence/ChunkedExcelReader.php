@@ -43,7 +43,7 @@ class ChunkedExcelReader
     private string $filePath;
     private int $chunkSize;
 
-    public function __construct(string $filePath, int $chunkSize = 500)
+    public function __construct(string $filePath, int $chunkSize = 200)
     {
         $this->filePath = $filePath;
         $this->chunkSize = $chunkSize;
@@ -64,6 +64,7 @@ class ChunkedExcelReader
             $inputFileType = IOFactory::identify($this->filePath);
             $reader = IOFactory::createReader($inputFileType);
             $reader->setReadDataOnly(true);
+            $reader->setReadEmptyCells(false); // No leer celdas vacías para ahorrar memoria
 
             $worksheetData = $reader->listWorksheetInfo($this->filePath);
             $totalRows = $worksheetData[0]['totalRows'];
@@ -93,6 +94,7 @@ class ChunkedExcelReader
                 $chunkFilter = new ChunkReadFilter($startRow, $this->chunkSize);
                 $reader = IOFactory::createReader($inputFileType);
                 $reader->setReadDataOnly(true);
+                $reader->setReadEmptyCells(false); // No leer celdas vacías
                 $reader->setReadFilter($chunkFilter);
 
                 $spreadsheet = $reader->load($this->filePath);
@@ -129,10 +131,15 @@ class ChunkedExcelReader
                     }
                 }
 
-                // Liberar memoria
+                // Liberar memoria agresivamente
                 $spreadsheet->disconnectWorksheets();
-                unset($spreadsheet, $chunkData);
+                unset($spreadsheet, $worksheet, $chunkData, $reader);
+
+                // Forzar recolección de basura cada chunk
                 gc_collect_cycles();
+
+                // Pequeña pausa para permitir que el sistema libere memoria
+                usleep(10000); // 10ms
             }
 
         } catch (\Exception $e) {
