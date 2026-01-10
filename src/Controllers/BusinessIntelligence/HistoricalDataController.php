@@ -3,13 +3,12 @@
 
 namespace App\Controllers\BusinessIntelligence;
 
-use App\Core\Controller;
 use App\Core\Request;
 use App\Core\Response;
 use App\Core\Session;
 use App\Services\BusinessIntelligence\HistoricalUploadService;
 
-class HistoricalDataController extends Controller
+class HistoricalDataController
 {
     private HistoricalUploadService $uploadService;
 
@@ -39,7 +38,15 @@ class HistoricalDataController extends Controller
             'availableYears' => [2021, 2022, 2023, 2024, 2025]
         ];
 
-        $this->render('business_intelligence/archivos_historicos', $data);
+        // Extraer variables para la vista
+        extract($data);
+
+        ob_start();
+        require __DIR__ . '/../../Views/business_intelligence/archivos_historicos.php';
+        $content = ob_get_clean();
+
+        $response = new Response();
+        $response->html($content);
     }
 
     /**
