@@ -14,17 +14,39 @@ class HistoricalDataProcessor
     {
         // Aumentar límite de memoria temporalmente para archivos grandes
         $originalMemoryLimit = ini_get('memory_limit');
-        ini_set('memory_limit', '1024M');
+        ini_set('memory_limit', '512M');
+
+        // Optimizar configuración de MySQL para inserciones masivas
+        try {
+            Database::query("SET autocommit = 0");
+            Database::query("SET unique_checks = 0");
+            Database::query("SET foreign_key_checks = 0");
+        } catch (\Exception $e) {
+            // Continuar si no se pueden cambiar estas configuraciones
+        }
 
         $insertedCount = 0;
         $allErrors = [];
 
         try {
-            // Usar ChunkedExcelReader para leer el archivo por chunks
-            $chunkedReader = new ChunkedExcelReader($filePath, 100);
+            // Usar ChunkedExcelReader con chunks más grandes (500 filas)
+            $chunkedReader = new ChunkedExcelReader($filePath, 500);
+
+            // Preparar el statement una vez fuera del loop
+            $sql = "INSERT INTO orfs_transactions
+                    (reasig, nit, nombre, corredor, comi_porcentual, ciudad, fecha,
+                     rueda_no, negociado, comi_bna, campo_209, comi_corr, iva_bna,
+                     iva_comi, iva_cama, facturado, mes, comi_corr_neto, year)
+                    VALUES
+                    (:reasig, :nit, :nombre, :corredor, :comi_porcentual, :ciudad, :fecha,
+                     :rueda_no, :negociado, :comi_bna, :campo_209, :comi_corr, :iva_bna,
+                     :iva_comi, :iva_cama, :facturado, :mes, :comi_corr_neto, :year)";
+
+            $pdo = Database::getInstance();
+            $stmt = $pdo->prepare($sql);
 
             // Definir el callback para procesar cada chunk
-            $results = $chunkedReader->processInChunks(function($chunkData, &$results) use ($year, &$insertedCount, &$allErrors) {
+            $results = $chunkedReader->processInChunks(function($chunkData, &$results) use ($year, &$insertedCount, &$allErrors, $stmt) {
                 // Iniciar transacción para este chunk
                 Database::beginTransaction();
 
@@ -61,17 +83,8 @@ class HistoricalDataProcessor
                                 continue;
                             }
 
-                            // Insertar en la base de datos
-                            $sql = "INSERT INTO orfs_transactions
-                                    (reasig, nit, nombre, corredor, comi_porcentual, ciudad, fecha,
-                                     rueda_no, negociado, comi_bna, campo_209, comi_corr, iva_bna,
-                                     iva_comi, iva_cama, facturado, mes, comi_corr_neto, year)
-                                    VALUES
-                                    (:reasig, :nit, :nombre, :corredor, :comi_porcentual, :ciudad, :fecha,
-                                     :rueda_no, :negociado, :comi_bna, :campo_209, :comi_corr, :iva_bna,
-                                     :iva_comi, :iva_cama, :facturado, :mes, :comi_corr_neto, :year)";
-
-                            Database::query($sql, $transaction);
+                            // Ejecutar usando el prepared statement reutilizable
+                            $stmt->execute($transaction);
                             $insertedCount++;
                             $results['processed']++;
 
@@ -118,6 +131,15 @@ class HistoricalDataProcessor
                 'message' => 'Error al procesar el archivo: ' . $e->getMessage()
             ];
         } finally {
+            // Restaurar configuraciones de MySQL
+            try {
+                Database::query("SET autocommit = 1");
+                Database::query("SET unique_checks = 1");
+                Database::query("SET foreign_key_checks = 1");
+            } catch (\Exception $e) {
+                // Ignorar errores al restaurar
+            }
+
             // Restaurar límite de memoria original
             ini_set('memory_limit', $originalMemoryLimit);
         }

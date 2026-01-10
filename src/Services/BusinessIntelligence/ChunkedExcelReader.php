@@ -43,7 +43,7 @@ class ChunkedExcelReader
     private string $filePath;
     private int $chunkSize;
 
-    public function __construct(string $filePath, int $chunkSize = 100)
+    public function __construct(string $filePath, int $chunkSize = 500)
     {
         $this->filePath = $filePath;
         $this->chunkSize = $chunkSize;
