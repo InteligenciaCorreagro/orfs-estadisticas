@@ -20,7 +20,7 @@ class ChunkReadFilter implements IReadFilter
         $this->endRow = $startRow + $chunkSize;
     }
 
-    public function readCell(string $columnAddress, int $row, string $worksheetName = ''): bool
+    public function readCell($columnAddress, $row, $worksheetName = '')
     {
         // Lee la fila de headers (fila 1) siempre
         if ($row == 1) {
