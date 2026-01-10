@@ -210,33 +210,31 @@ ob_start();
 </div>
 
 <!-- Modal de confirmación de eliminación -->
-<div class="modal fade" id="deleteModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header bg-danger text-white">
-                <h5 class="modal-title">
-                    <i class="fas fa-exclamation-triangle me-2"></i>
-                    Confirmar Eliminación
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <p>¿Está seguro que desea eliminar este archivo histórico?</p>
-                <p class="text-danger mb-0">
-                    <strong>Esta acción no se puede deshacer.</strong>
-                </p>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                <form id="deleteForm" method="POST" action="/bi/archivos-historicos/delete" style="display: inline;">
-                    <?= csrfField() ?>
-                    <input type="hidden" name="id" id="deleteId">
-                    <button type="submit" class="btn btn-danger">
-                        <i class="fas fa-trash me-2"></i>
-                        Eliminar
-                    </button>
-                </form>
-            </div>
+<div id="deleteModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999; align-items: center; justify-content: center;">
+    <div style="background: white; border-radius: 8px; max-width: 500px; width: 90%; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+        <div style="background: #dc3545; color: white; padding: 15px 20px; border-radius: 8px 8px 0 0; display: flex; justify-content: space-between; align-items: center;">
+            <h5 style="margin: 0; font-size: 18px;">
+                <i class="fas fa-exclamation-triangle" style="margin-right: 8px;"></i>
+                Confirmar Eliminación
+            </h5>
+            <button type="button" onclick="closeDeleteModal()" style="background: none; border: none; color: white; font-size: 24px; cursor: pointer; line-height: 1;">&times;</button>
+        </div>
+        <div style="padding: 20px;">
+            <p style="margin-bottom: 10px;">¿Está seguro que desea eliminar este archivo histórico?</p>
+            <p style="color: #dc3545; margin: 0;">
+                <strong>Esta acción no se puede deshacer.</strong>
+            </p>
+        </div>
+        <div style="padding: 15px 20px; border-top: 1px solid #dee2e6; display: flex; justify-content: flex-end; gap: 10px;">
+            <button type="button" class="btn btn-secondary" onclick="closeDeleteModal()">Cancelar</button>
+            <form id="deleteForm" method="POST" action="/bi/archivos-historicos/delete" style="display: inline; margin: 0;">
+                <?= csrfField() ?>
+                <input type="hidden" name="id" id="deleteId">
+                <button type="submit" class="btn btn-danger">
+                    <i class="fas fa-trash" style="margin-right: 8px;"></i>
+                    Eliminar
+                </button>
+            </form>
         </div>
     </div>
 </div>
@@ -244,9 +242,21 @@ ob_start();
 <script>
 function confirmDelete(id) {
     document.getElementById('deleteId').value = id;
-    const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
-    modal.show();
+    const modal = document.getElementById('deleteModal');
+    modal.style.display = 'flex';
 }
+
+function closeDeleteModal() {
+    const modal = document.getElementById('deleteModal');
+    modal.style.display = 'none';
+}
+
+// Cerrar modal al hacer clic fuera de él
+document.getElementById('deleteModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeDeleteModal();
+    }
+});
 </script>
 
 <?php
