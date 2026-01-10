@@ -54,18 +54,11 @@ class HistoricalUploadService
                 'notes' => $notes
             ];
 
-            $result = Database::execute($sql, $params);
-
-            if ($result) {
-                return [
-                    'success' => true,
-                    'message' => 'Archivo histórico de ' . $year . ' subido exitosamente'
-                ];
-            }
+            Database::query($sql, $params);
 
             return [
-                'success' => false,
-                'message' => 'Error al guardar el registro en la base de datos'
+                'success' => true,
+                'message' => 'Archivo histórico de ' . $year . ' subido exitosamente'
             ];
 
         } catch (\Exception $e) {
@@ -125,7 +118,7 @@ class HistoricalUploadService
 
             // Eliminar de base de datos
             $sql = "DELETE FROM historical_uploads WHERE id = :id";
-            Database::execute($sql, ['id' => $id]);
+            Database::query($sql, ['id' => $id]);
 
             return [
                 'success' => true,
