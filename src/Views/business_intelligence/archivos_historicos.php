@@ -156,6 +156,8 @@ ob_start();
                                         <th>Año</th>
                                         <th>Nombre Original</th>
                                         <th>Tamaño</th>
+                                        <th>Estado</th>
+                                        <th>Registros</th>
                                         <th>Subido Por</th>
                                         <th>Fecha de Carga</th>
                                         <th>Notas</th>
@@ -175,6 +177,26 @@ ob_start();
                                             <?= e($upload['original_filename']) ?>
                                         </td>
                                         <td><?= getReadableFileSize($upload['file_size']) ?></td>
+                                        <td>
+                                            <?php if ($upload['processed']): ?>
+                                                <span class="badge bg-success">
+                                                    <i class="fas fa-check"></i> Procesado
+                                                </span>
+                                            <?php else: ?>
+                                                <span class="badge bg-warning">
+                                                    <i class="fas fa-clock"></i> Pendiente
+                                                </span>
+                                            <?php endif; ?>
+                                        </td>
+                                        <td>
+                                            <?php if ($upload['processed']): ?>
+                                                <span class="badge bg-info">
+                                                    <?= number_format($upload['records_count']) ?> registros
+                                                </span>
+                                            <?php else: ?>
+                                                <span class="text-muted">-</span>
+                                            <?php endif; ?>
+                                        </td>
                                         <td><?= e($upload['uploaded_by_name']) ?></td>
                                         <td><?= formatDateTime($upload['upload_date']) ?></td>
                                         <td>

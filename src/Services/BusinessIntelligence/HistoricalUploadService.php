@@ -8,10 +8,12 @@ use App\Core\Database;
 class HistoricalUploadService
 {
     private string $uploadDir;
+    private HistoricalDataProcessor $processor;
 
     public function __construct()
     {
         $this->uploadDir = __DIR__ . '/../../../storage/uploads/historical/';
+        $this->processor = new HistoricalDataProcessor();
 
         // Crear directorio si no existe
         if (!is_dir($this->uploadDir)) {
@@ -57,10 +59,44 @@ class HistoricalUploadService
             try {
                 Database::query($sql, $params);
 
-                return [
-                    'success' => true,
-                    'message' => 'Archivo histórico de ' . $year . ' subido exitosamente'
-                ];
+                // Obtener el ID del registro insertado
+                $uploadId = Database::getInstance()->lastInsertId();
+
+                // Procesar el archivo e insertar datos en orfs_transactions
+                $processingResult = $this->processor->processHistoricalFile($filePath, $year);
+
+                if ($processingResult['success']) {
+                    // Marcar el archivo como procesado
+                    $updateSql = "UPDATE historical_uploads
+                                  SET processed = TRUE,
+                                      processed_at = NOW(),
+                                      records_count = :records_count
+                                  WHERE id = :id";
+
+                    Database::query($updateSql, [
+                        'records_count' => $processingResult['inserted'],
+                        'id' => $uploadId
+                    ]);
+
+                    $message = 'Archivo histórico de ' . $year . ' subido y procesado exitosamente. ';
+                    $message .= $processingResult['inserted'] . ' registros insertados en la base de datos.';
+
+                    if (!empty($processingResult['errors'])) {
+                        $message .= ' Se encontraron ' . count($processingResult['errors']) . ' errores.';
+                    }
+
+                    return [
+                        'success' => true,
+                        'message' => $message,
+                        'details' => $processingResult
+                    ];
+                } else {
+                    return [
+                        'success' => false,
+                        'message' => 'Archivo subido pero no se pudo procesar: ' . $processingResult['message']
+                    ];
+                }
+
             } catch (\PDOException $e) {
                 // Si hay error en la BD, eliminar el archivo físico
                 if (file_exists($filePath)) {
