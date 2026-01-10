@@ -8,12 +8,10 @@ use App\Core\Database;
 class HistoricalUploadService
 {
     private string $uploadDir;
-    private HistoricalDataProcessor $processor;
 
     public function __construct()
     {
         $this->uploadDir = __DIR__ . '/../../../storage/uploads/historical/';
-        $this->processor = new HistoricalDataProcessor();
 
         // Crear directorio si no existe
         if (!is_dir($this->uploadDir)) {
@@ -63,7 +61,8 @@ class HistoricalUploadService
                 $uploadId = Database::getInstance()->lastInsertId();
 
                 // Procesar el archivo e insertar datos en orfs_transactions
-                $processingResult = $this->processor->processHistoricalFile($filePath, $year);
+                $processor = new HistoricalDataProcessor();
+                $processingResult = $processor->processHistoricalFile($filePath, $year);
 
                 if ($processingResult['success']) {
                     // Marcar el archivo como procesado

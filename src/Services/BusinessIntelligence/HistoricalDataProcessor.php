@@ -8,13 +8,6 @@ use App\Services\Excel\ExcelReader;
 
 class HistoricalDataProcessor
 {
-    private ExcelReader $excelReader;
-
-    public function __construct()
-    {
-        $this->excelReader = new ExcelReader();
-    }
-
     /**
      * Procesar archivo histórico e insertar en orfs_transactions
      */
@@ -22,7 +15,8 @@ class HistoricalDataProcessor
     {
         try {
             // Leer archivo Excel/CSV
-            $data = $this->excelReader->read($filePath);
+            $excelReader = new ExcelReader($filePath);
+            $data = $excelReader->load()->toAssociativeArray();
 
             if (empty($data)) {
                 return [
@@ -32,7 +26,8 @@ class HistoricalDataProcessor
             }
 
             // Verificar que tenga las columnas esperadas
-            $requiredColumns = ['REASIG', 'NIT', 'NOMBRE', 'CORREDOR', 'FECHA', 'RUEDA_NO', 'NEGOCIADO', 'MES'];
+            // Nota: ExcelReader convierte headers a minúsculas
+            $requiredColumns = ['reasig', 'nit', 'nombre', 'corredor', 'fecha', 'rueda_no', 'negociado', 'mes'];
             $headers = array_keys($data[0]);
 
             $missingColumns = [];
@@ -57,26 +52,26 @@ class HistoricalDataProcessor
 
             foreach ($data as $index => $row) {
                 try {
-                    // Preparar datos para insertar
+                    // Preparar datos para insertar (columnas en minúsculas porque ExcelReader las convierte)
                     $transaction = [
-                        'reasig' => $row['REASIG'] ?? null,
-                        'nit' => $row['NIT'] ?? '',
-                        'nombre' => $row['NOMBRE'] ?? '',
-                        'corredor' => $row['CORREDOR'] ?? '',
-                        'comi_porcentual' => floatval($row['COMI_PORCENTUAL'] ?? 0),
-                        'ciudad' => $row['CIUDAD'] ?? null,
-                        'fecha' => $this->parseDate($row['FECHA'] ?? ''),
-                        'rueda_no' => intval($row['RUEDA_NO'] ?? 0),
-                        'negociado' => floatval($row['NEGOCIADO'] ?? 0),
-                        'comi_bna' => floatval($row['COMI_BNA'] ?? 0),
+                        'reasig' => $row['reasig'] ?? null,
+                        'nit' => $row['nit'] ?? '',
+                        'nombre' => $row['nombre'] ?? '',
+                        'corredor' => $row['corredor'] ?? '',
+                        'comi_porcentual' => floatval($row['comi_porcentual'] ?? 0),
+                        'ciudad' => $row['ciudad'] ?? null,
+                        'fecha' => $this->parseDate($row['fecha'] ?? ''),
+                        'rueda_no' => intval($row['rueda_no'] ?? 0),
+                        'negociado' => floatval($row['negociado'] ?? 0),
+                        'comi_bna' => floatval($row['comi_bna'] ?? 0),
                         'campo_209' => floatval($row['246'] ?? 0),
-                        'comi_corr' => floatval($row['COMI_CORR'] ?? 0),
-                        'iva_bna' => floatval($row['IVA_BNA'] ?? 0),
-                        'iva_comi' => floatval($row['IVA_COMI'] ?? 0),
-                        'iva_cama' => floatval($row['IVA_CAMA'] ?? 0),
-                        'facturado' => floatval($row['FACTURADO'] ?? 0),
-                        'mes' => $row['MES'] ?? '',
-                        'comi_corr_neto' => floatval($row['COMI_CORR_NETO'] ?? 0),
+                        'comi_corr' => floatval($row['comi_corr'] ?? 0),
+                        'iva_bna' => floatval($row['iva_bna'] ?? 0),
+                        'iva_comi' => floatval($row['iva_comi'] ?? 0),
+                        'iva_cama' => floatval($row['iva_cama'] ?? 0),
+                        'facturado' => floatval($row['facturado'] ?? 0),
+                        'mes' => $row['mes'] ?? '',
+                        'comi_corr_neto' => floatval($row['comi_corr_neto'] ?? 0),
                         'year' => $year // El año viene del parámetro
                     ];
 
