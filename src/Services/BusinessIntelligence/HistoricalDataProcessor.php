@@ -13,6 +13,10 @@ class HistoricalDataProcessor
      */
     public function processHistoricalFile(string $filePath, int $year): array
     {
+        // Aumentar límite de memoria temporalmente para archivos grandes
+        $originalMemoryLimit = ini_get('memory_limit');
+        ini_set('memory_limit', '512M');
+
         try {
             // Leer archivo Excel/CSV
             $excelReader = new ExcelReader($filePath);
@@ -44,15 +48,24 @@ class HistoricalDataProcessor
                 ];
             }
 
-            // Iniciar transacción
-            Database::beginTransaction();
-
+            // Procesar en lotes para mejor rendimiento de memoria
+            $batchSize = 100;
             $insertedCount = 0;
             $errors = [];
+            $totalRows = count($data);
 
-            foreach ($data as $index => $row) {
+            for ($offset = 0; $offset < $totalRows; $offset += $batchSize) {
+                // Iniciar transacción para este lote
+                Database::beginTransaction();
+
                 try {
-                    // Preparar datos para insertar (columnas en minúsculas porque ExcelReader las convierte)
+                    $batch = array_slice($data, $offset, $batchSize);
+
+                    foreach ($batch as $index => $row) {
+                        $actualIndex = $offset + $index;
+
+                        try {
+                            // Preparar datos para insertar (columnas en minúsculas porque ExcelReader las convierte)
                     $transaction = [
                         'reasig' => $row['reasig'] ?? null,
                         'nit' => $row['nit'] ?? '',
@@ -75,33 +88,48 @@ class HistoricalDataProcessor
                         'year' => $year // El año viene del parámetro
                     ];
 
-                    // Validar datos requeridos
-                    if (empty($transaction['nit']) || empty($transaction['nombre']) ||
-                        empty($transaction['corredor']) || empty($transaction['fecha'])) {
-                        $errors[] = "Fila " . ($index + 2) . ": Datos requeridos faltantes";
-                        continue;
+                            // Validar datos requeridos
+                            if (empty($transaction['nit']) || empty($transaction['nombre']) ||
+                                empty($transaction['corredor']) || empty($transaction['fecha'])) {
+                                $errors[] = "Fila " . ($actualIndex + 2) . ": Datos requeridos faltantes";
+                                continue;
+                            }
+
+                            // Insertar en la base de datos
+                            $sql = "INSERT INTO orfs_transactions
+                                    (reasig, nit, nombre, corredor, comi_porcentual, ciudad, fecha,
+                                     rueda_no, negociado, comi_bna, campo_209, comi_corr, iva_bna,
+                                     iva_comi, iva_cama, facturado, mes, comi_corr_neto, year)
+                                    VALUES
+                                    (:reasig, :nit, :nombre, :corredor, :comi_porcentual, :ciudad, :fecha,
+                                     :rueda_no, :negociado, :comi_bna, :campo_209, :comi_corr, :iva_bna,
+                                     :iva_comi, :iva_cama, :facturado, :mes, :comi_corr_neto, :year)";
+
+                            Database::query($sql, $transaction);
+                            $insertedCount++;
+
+                        } catch (\Exception $e) {
+                            $errors[] = "Fila " . ($actualIndex + 2) . ": " . $e->getMessage();
+                        }
                     }
 
-                    // Insertar en la base de datos
-                    $sql = "INSERT INTO orfs_transactions
-                            (reasig, nit, nombre, corredor, comi_porcentual, ciudad, fecha,
-                             rueda_no, negociado, comi_bna, campo_209, comi_corr, iva_bna,
-                             iva_comi, iva_cama, facturado, mes, comi_corr_neto, year)
-                            VALUES
-                            (:reasig, :nit, :nombre, :corredor, :comi_porcentual, :ciudad, :fecha,
-                             :rueda_no, :negociado, :comi_bna, :campo_209, :comi_corr, :iva_bna,
-                             :iva_comi, :iva_cama, :facturado, :mes, :comi_corr_neto, :year)";
+                    // Commit del lote si todo salió bien
+                    Database::commit();
 
-                    Database::query($sql, $transaction);
-                    $insertedCount++;
+                    // Liberar memoria del lote procesado
+                    unset($batch);
 
                 } catch (\Exception $e) {
-                    $errors[] = "Fila " . ($index + 2) . ": " . $e->getMessage();
+                    // Rollback del lote en caso de error
+                    try {
+                        Database::rollback();
+                    } catch (\Exception $rollbackException) {
+                        // Ignorar errores de rollback
+                    }
+
+                    $errors[] = "Error en lote (filas " . ($offset + 1) . " a " . ($offset + $batchSize) . "): " . $e->getMessage();
                 }
             }
-
-            // Commit si todo salió bien
-            Database::commit();
 
             $message = "Procesamiento completado. {$insertedCount} registros insertados";
             if (!empty($errors)) {
@@ -128,6 +156,9 @@ class HistoricalDataProcessor
                 'success' => false,
                 'message' => 'Error al procesar el archivo: ' . $e->getMessage()
             ];
+        } finally {
+            // Restaurar límite de memoria original
+            ini_set('memory_limit', $originalMemoryLimit);
         }
     }
 
