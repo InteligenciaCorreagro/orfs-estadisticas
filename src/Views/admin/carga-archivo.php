@@ -428,12 +428,18 @@ document.addEventListener('DOMContentLoaded', function() {
         if (e.target === uploadModal) closeModal();
     });
 
+    // Evitar que clics dentro del modal cierren el overlay
+    document.querySelector('.upload-modal').addEventListener('click', (e) => {
+        e.stopPropagation();
+    });
+
     function closeModal() {
         uploadModal.classList.remove('active');
     }
 
     // Click en drop zone
-    dropZone.addEventListener('click', () => {
+    dropZone.addEventListener('click', (e) => {
+        e.stopPropagation();
         fileInput.click();
     });
 
