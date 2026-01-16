@@ -5,9 +5,16 @@ $pageTitle = 'Reporte ORFS';
 ?>
 
 <style>
-/* Estilos para grupos colapsables */
+/* Contenedor principal de datos */
+#dataContainer {
+    width: 100%;
+    max-width: 100%;
+    overflow: hidden;
+}
+
 .corredor-group {
     margin-bottom: 2px;
+    max-width: 100%;
 }
 
 .corredor-header {
@@ -64,19 +71,30 @@ $pageTitle = 'Reporte ORFS';
     border: 1px solid #ddd;
     border-top: none;
     border-radius: 0 0 4px 4px;
-    overflow-x: auto;
-    max-width: 100%;
 }
 
 .corredor-content.show {
     display: block;
 }
 
+.table-scroll-wrapper {
+    overflow-x: auto;
+    overflow-y: visible;
+    width: 100%;
+    max-width: calc(100vw - 300px);
+}
+
+@media (max-width: 992px) {
+    .table-scroll-wrapper {
+        max-width: calc(100vw - 40px);
+    }
+}
+
 .corredor-content table {
     margin: 0;
     font-size: 12px;
-    min-width: 100%;
     white-space: nowrap;
+    border-collapse: collapse;
 }
 
 .corredor-content th,
@@ -670,6 +688,7 @@ function renderGroupedTable(data) {
                     </div>
                 </div>
                 <div class="corredor-content">
+                    <div class="table-scroll-wrapper">
                     <table class="data-table">
                         <thead>
                             <tr>
@@ -705,6 +724,7 @@ function renderGroupedTable(data) {
                 </tr>
             </tbody>
                     </table>
+                    </div>
                 </div>
             </div>
         `;
