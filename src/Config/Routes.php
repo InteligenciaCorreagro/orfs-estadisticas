@@ -158,6 +158,8 @@ class Routes
 
         // Dashboard API (admin y business_intelligence)
         Router::get('/api/dashboard', [DashboardController::class, 'getDashboardData'], $adminMiddleware);
+        Router::get('/api/dashboard/layout', [DashboardController::class, 'getLayout'], $adminMiddleware);
+        Router::post('/api/dashboard/layout', [DashboardController::class, 'saveLayout'], $adminMiddleware);
         
         // Traders
         Router::get('/api/admin/traders', [TraderController::class, 'index'], $adminMiddleware);

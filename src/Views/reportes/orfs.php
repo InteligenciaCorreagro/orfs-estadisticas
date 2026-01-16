@@ -107,7 +107,7 @@ $pageTitle = 'Reporte ORFS';
     position: sticky;
     left: 0;
     background: white;
-    z-index: 10;
+    z-index: 99999;
     border-right: 2px solid #ddd;
 }
 
@@ -116,14 +116,14 @@ $pageTitle = 'Reporte ORFS';
     position: sticky;
     left: 80px;
     background: white;
-    z-index: 10;
+    z-index: 99999;
     border-right: 2px solid #ddd;
 }
 
 .corredor-content th:first-child,
 .corredor-content th:nth-child(2) {
     background: #f8f9fa;
-    z-index: 11;
+    z-index: 99999;
 }
 
 .corredor-content tr:hover td:first-child,
@@ -138,6 +138,16 @@ $pageTitle = 'Reporte ORFS';
 }
 
 /* Filtros mejorados */
+.filter-card {
+    position: relative;
+    z-index: 200000;
+    overflow: visible;
+}
+
+.filter-card .card-body {
+    overflow: visible;
+}
+
 .filter-row {
     display: flex;
     flex-wrap: wrap;
@@ -151,6 +161,8 @@ $pageTitle = 'Reporte ORFS';
     flex-direction: column;
     gap: 8px;
     min-width: 150px;
+    position: relative;
+    z-index: 99999;
 }
 
 .filter-group label {
@@ -161,6 +173,7 @@ $pageTitle = 'Reporte ORFS';
 
 .multi-select-container {
     position: relative;
+    z-index: 99999;
 }
 
 .multi-select-btn {
@@ -189,7 +202,7 @@ $pageTitle = 'Reporte ORFS';
     border: 1px solid #ddd;
     border-radius: 6px;
     box-shadow: 0 8px 24px rgba(0,0,0,0.2);
-    z-index: 99999;
+    z-index: 200001;
     max-height: 300px;
     overflow-y: auto;
     display: none;
@@ -275,12 +288,23 @@ $pageTitle = 'Reporte ORFS';
     text-align: left;
     position: sticky;
     left: 0;
-    background: inherit;
+    background: #fff;
+    z-index: 99999;
 }
 
 .data-table th:nth-child(2),
 .data-table td:nth-child(2) {
     text-align: left;
+    position: sticky;
+    left: 80px;
+    background: #fff;
+    z-index: 99998;
+}
+
+.data-table thead th:first-child,
+.data-table thead th:nth-child(2) {
+    background: #f8f9fa;
+    z-index: 100000;
 }
 
 .data-table tbody tr:hover {
@@ -310,7 +334,7 @@ $pageTitle = 'Reporte ORFS';
 </div>
 
 <!-- Filtros -->
-<div class="card mb-3" style="overflow: visible;">
+<div class="card mb-3 filter-card" style="overflow: visible;">
     <div class="card-body" style="overflow: visible;">
         <div class="filter-row" style="display: flex; flex-wrap: wrap; align-items: flex-end; gap: 20px;">
             <!-- Año -->
@@ -329,7 +353,7 @@ $pageTitle = 'Reporte ORFS';
             <div class="filter-group">
                 <label><i class="fas fa-calendar-alt"></i> Meses:</label>
                 <div class="multi-select-container" id="mesesContainer">
-                    <button type="button" class="multi-select-btn" onclick="toggleDropdown('meses')">
+                    <button type="button" class="multi-select-btn" onclick="toggleDropdown('meses', event)">
                         <span id="mesesLabel">Todos los meses</span>
                         <i class="fas fa-chevron-down"></i>
                     </button>
@@ -349,7 +373,7 @@ $pageTitle = 'Reporte ORFS';
             <div class="filter-group">
                 <label><i class="fas fa-user-tie"></i> Corredores:</label>
                 <div class="multi-select-container" id="corredoresContainer">
-                    <button type="button" class="multi-select-btn" onclick="toggleDropdown('corredores')">
+                    <button type="button" class="multi-select-btn" onclick="toggleDropdown('corredores', event)">
                         <span id="corredoresLabel">Todos los corredores</span>
                         <i class="fas fa-chevron-down"></i>
                     </button>
@@ -369,7 +393,7 @@ $pageTitle = 'Reporte ORFS';
             <div class="filter-group">
                 <label><i class="fas fa-users"></i> Clientes:</label>
                 <div class="multi-select-container" id="clientesContainer">
-                    <button type="button" class="multi-select-btn" onclick="toggleDropdown('clientes')">
+                    <button type="button" class="multi-select-btn" onclick="toggleDropdown('clientes', event)">
                         <span id="clientesLabel">Todos los clientes</span>
                         <i class="fas fa-chevron-down"></i>
                     </button>
@@ -450,6 +474,7 @@ let selectedCorredores = [];
 let selectedClientes = [];
 let allCorredores = [];
 let allClientes = [];
+let lastVisibleClientes = [];
 
 document.addEventListener('DOMContentLoaded', function() {
     initMesesOptions();
@@ -473,8 +498,10 @@ function initMesesOptions() {
     `).join('');
 }
 
-function toggleDropdown(type) {
-    event.stopPropagation();
+function toggleDropdown(type, event) {
+    if (event) {
+        event.stopPropagation();
+    }
     const dropdown = document.getElementById(type + 'Dropdown');
     const isOpen = dropdown.classList.contains('show');
 
@@ -533,7 +560,8 @@ function updateCorredoresSelection() {
         label.textContent = `${selectedCorredores.length} corredores`;
     }
 
-    document.getElementById('corredoresSelectAll').checked = selectedCorredores.length === allCorredores.length;
+    document.getElementById('corredoresSelectAll').checked =
+        allCorredores.length > 0 && selectedCorredores.length === allCorredores.length;
 
     // Actualizar lista de clientes según corredores seleccionados
     updateClientesOptions();
@@ -553,11 +581,15 @@ function updateClientesSelection() {
         label.textContent = `${selectedClientes.length} clientes`;
     }
 
-    document.getElementById('clientesSelectAll').checked = selectedClientes.length === visibleClientes.length;
+    document.getElementById('clientesSelectAll').checked =
+        visibleClientes.length > 0 && selectedClientes.length === visibleClientes.length;
 }
 
 function getVisibleClientes() {
-    if (selectedCorredores.length === 0 || selectedCorredores.length === allCorredores.length) {
+    if (selectedCorredores.length === 0) {
+        return [];
+    }
+    if (selectedCorredores.length === allCorredores.length) {
         return allClientes;
     }
     return [...new Set(allData.filter(d => selectedCorredores.includes(d.corredor)).map(d => d.nit + '|' + d.cliente))];
@@ -567,15 +599,19 @@ function updateClientesOptions() {
     const visibleClientes = getVisibleClientes();
     const container = document.getElementById('clientesOptions');
 
-    // Mantener seleccionados los que ya estaban y agregar los nuevos visibles
     const previousSelected = [...selectedClientes];
+    const previousVisible = [...lastVisibleClientes];
+    const hadAllVisibleSelected = previousVisible.length > 0 &&
+        previousSelected.length === previousVisible.length;
+    const shouldSelectAll = visibleClientes.length > 0 &&
+        (previousVisible.length === 0 || previousSelected.length === allClientes.length || hadAllVisibleSelected);
+    const allowSelectNew = previousSelected.length > 0 || previousVisible.length === 0;
 
     container.innerHTML = visibleClientes.map(c => {
         const [nit, nombre] = c.split('|');
-        // Si estaba seleccionado antes o es nuevo (todos los nuevos seleccionados por defecto)
         const wasSelected = previousSelected.includes(c);
-        const isNew = !allClientes.includes(c) || previousSelected.length === 0;
-        const isChecked = (wasSelected || isNew || previousSelected.length === allClientes.length) ? 'checked' : '';
+        const isNewVisible = !previousVisible.includes(c);
+        const isChecked = (shouldSelectAll || wasSelected || (allowSelectNew && isNewVisible)) ? 'checked' : '';
         return `
             <label class="option">
                 <input type="checkbox" value="${c}" ${isChecked} onchange="updateClientesSelection()">
@@ -587,6 +623,7 @@ function updateClientesOptions() {
     // Actualizar selectedClientes basado en los checkboxes actuales
     const checkboxes = document.querySelectorAll('#clientesOptions input:checked');
     selectedClientes = Array.from(checkboxes).map(cb => cb.value);
+    lastVisibleClientes = [...visibleClientes];
 
     updateClientesSelection();
 }
@@ -667,6 +704,10 @@ function applyFilters() {
     renderGroupedTable(filteredData);
 }
 
+function getRowTotal(row) {
+    return selectedMeses.reduce((sum, mes) => sum + parseFloat(row[mes] || 0), 0);
+}
+
 function renderGroupedTable(data) {
     if (data.length === 0) {
         document.getElementById('dataContainer').innerHTML =
@@ -689,7 +730,7 @@ function renderGroupedTable(data) {
     Object.keys(grouped).forEach(corredor => {
         corredorTotals[corredor] = {
             clientes: grouped[corredor].length,
-            total: grouped[corredor].reduce((sum, r) => sum + parseFloat(r.total || 0), 0)
+            total: grouped[corredor].reduce((sum, r) => sum + getRowTotal(r), 0)
         };
     });
 
@@ -734,12 +775,13 @@ function renderGroupedTable(data) {
         `;
 
         rows.forEach(row => {
+            const rowTotal = getRowTotal(row);
             html += `
                 <tr>
                     <td>${row.nit}</td>
                     <td>${row.cliente}</td>
                     ${visibleMeses.map(m => `<td>${formatCurrency(row[m.key])}</td>`).join('')}
-                    <td class="total-column">${formatCurrency(row.total)}</td>
+                    <td class="total-column">${formatCurrency(rowTotal)}</td>
                 </tr>
             `;
         });

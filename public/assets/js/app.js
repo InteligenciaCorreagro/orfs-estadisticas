@@ -106,6 +106,22 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
+    // Accordion en sidebar (Benchmark)
+    const accordionToggles = document.querySelectorAll('.menu-accordion-toggle');
+    accordionToggles.forEach(toggle => {
+        const item = toggle.closest('.menu-accordion');
+        if (!item) return;
+        const hasActive = item.querySelector('.menu-submenu a.active');
+        if (hasActive) {
+            item.classList.add('open');
+            toggle.setAttribute('aria-expanded', 'true');
+        }
+        toggle.addEventListener('click', () => {
+            const isOpen = item.classList.toggle('open');
+            toggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+        });
+    });
+
     // Sidebar toggle functionality
     const sidebarToggle = document.getElementById('sidebarToggle');
     if (sidebarToggle) {
