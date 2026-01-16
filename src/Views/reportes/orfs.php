@@ -8,13 +8,11 @@ $pageTitle = 'Reporte ORFS';
 /* Contenedor principal de datos */
 #dataContainer {
     width: 100%;
-    max-width: 100%;
     overflow: hidden;
 }
 
 .corredor-group {
     margin-bottom: 2px;
-    max-width: 100%;
 }
 
 .corredor-header {
@@ -81,32 +79,62 @@ $pageTitle = 'Reporte ORFS';
     overflow-x: auto;
     overflow-y: visible;
     width: 100%;
-    max-width: calc(100vw - 300px);
-}
-
-@media (max-width: 992px) {
-    .table-scroll-wrapper {
-        max-width: calc(100vw - 40px);
-    }
+    display: block;
 }
 
 .corredor-content table {
     margin: 0;
     font-size: 12px;
     white-space: nowrap;
-    border-collapse: collapse;
+    border-collapse: separate;
+    border-spacing: 0;
 }
 
 .corredor-content th,
 .corredor-content td {
     white-space: nowrap;
     padding: 8px 10px;
+    border-bottom: 1px solid #eee;
 }
 
 .corredor-content th {
     background: #f8f9fa;
+}
+
+/* Columnas sticky - NIT y Cliente */
+.corredor-content td:first-child,
+.corredor-content th:first-child {
     position: sticky;
-    top: 0;
+    left: 0;
+    background: white;
+    z-index: 10;
+    border-right: 2px solid #ddd;
+}
+
+.corredor-content td:nth-child(2),
+.corredor-content th:nth-child(2) {
+    position: sticky;
+    left: 80px;
+    background: white;
+    z-index: 10;
+    border-right: 2px solid #ddd;
+}
+
+.corredor-content th:first-child,
+.corredor-content th:nth-child(2) {
+    background: #f8f9fa;
+    z-index: 11;
+}
+
+.corredor-content tr:hover td:first-child,
+.corredor-content tr:hover td:nth-child(2) {
+    background: #f0f7ff;
+}
+
+/* Fila de totales sticky */
+.corredor-content tr[style*="background: #e8f4e8"] td:first-child,
+.corredor-content tr[style*="background: #e8f4e8"] td:nth-child(2) {
+    background: #e8f4e8;
 }
 
 /* Filtros mejorados */
@@ -539,9 +567,15 @@ function updateClientesOptions() {
     const visibleClientes = getVisibleClientes();
     const container = document.getElementById('clientesOptions');
 
+    // Mantener seleccionados los que ya estaban y agregar los nuevos visibles
+    const previousSelected = [...selectedClientes];
+
     container.innerHTML = visibleClientes.map(c => {
         const [nit, nombre] = c.split('|');
-        const isChecked = selectedClientes.includes(c) ? 'checked' : '';
+        // Si estaba seleccionado antes o es nuevo (todos los nuevos seleccionados por defecto)
+        const wasSelected = previousSelected.includes(c);
+        const isNew = !allClientes.includes(c) || previousSelected.length === 0;
+        const isChecked = (wasSelected || isNew || previousSelected.length === allClientes.length) ? 'checked' : '';
         return `
             <label class="option">
                 <input type="checkbox" value="${c}" ${isChecked} onchange="updateClientesSelection()">
@@ -550,12 +584,10 @@ function updateClientesOptions() {
         `;
     }).join('');
 
-    // Actualizar selección
-    selectedClientes = selectedClientes.filter(c => visibleClientes.includes(c));
-    if (selectedClientes.length === 0 && visibleClientes.length > 0) {
-        selectedClientes = [...visibleClientes];
-        document.querySelectorAll('#clientesOptions input').forEach(cb => cb.checked = true);
-    }
+    // Actualizar selectedClientes basado en los checkboxes actuales
+    const checkboxes = document.querySelectorAll('#clientesOptions input:checked');
+    selectedClientes = Array.from(checkboxes).map(cb => cb.value);
+
     updateClientesSelection();
 }
 
