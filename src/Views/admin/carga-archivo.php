@@ -423,17 +423,29 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // Cerrar modal
-    btnCloseModal.addEventListener('click', closeModal);
+    btnCloseModal.addEventListener('click', (e) => {
+        e.stopPropagation();
+        closeModal();
+    });
     uploadModal.addEventListener('click', (e) => {
         if (e.target === uploadModal) closeModal();
     });
+
+    // Prevenir que clicks dentro del modal cierren el modal
+    const modalContainer = uploadModal.querySelector('.upload-modal');
+    if (modalContainer) {
+        modalContainer.addEventListener('click', (e) => {
+            e.stopPropagation();
+        });
+    }
 
     function closeModal() {
         uploadModal.classList.remove('active');
     }
 
     // Click en drop zone
-    dropZone.addEventListener('click', () => {
+    dropZone.addEventListener('click', (e) => {
+        e.stopPropagation();
         fileInput.click();
     });
 
