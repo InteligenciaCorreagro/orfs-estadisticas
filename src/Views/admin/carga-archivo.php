@@ -20,9 +20,11 @@ $pageTitle = 'Cargar Archivo';
 }
 
 .modal-overlay.active {
-    display: flex;
+    display: flex !important;
     align-items: center;
     justify-content: center;
+    opacity: 1 !important;
+    pointer-events: auto !important;
 }
 
 @keyframes fadeIn {
@@ -418,8 +420,12 @@ document.addEventListener('DOMContentLoaded', function() {
     loadHistorial();
 
     // Abrir modal
-    btnOpenModal.addEventListener('click', () => {
+    btnOpenModal.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        console.log('Abriendo modal...');
         uploadModal.classList.add('active');
+        console.log('Modal abierto, clase active:', uploadModal.classList.contains('active'));
     });
 
     // Cerrar modal
@@ -428,6 +434,7 @@ document.addEventListener('DOMContentLoaded', function() {
         closeModal();
     });
     uploadModal.addEventListener('click', (e) => {
+        console.log('Click en uploadModal - target:', e.target, 'es overlay:', e.target === uploadModal);
         if (e.target === uploadModal) closeModal();
     });
 
@@ -440,6 +447,8 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function closeModal() {
+        console.log('closeModal llamado - Stack trace:');
+        console.trace();
         uploadModal.classList.remove('active');
     }
 
