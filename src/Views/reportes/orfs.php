@@ -83,10 +83,19 @@ $pageTitle = 'Reporte ORFS';
 }
 
 /* Filtros mejorados */
+.filter-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 20px;
+    padding-bottom: 10px;
+}
+
 .filter-group {
     display: flex;
     flex-direction: column;
-    gap: 5px;
+    gap: 8px;
+    min-width: 150px;
 }
 
 .filter-group label {
@@ -120,13 +129,13 @@ $pageTitle = 'Reporte ORFS';
     position: absolute;
     top: 100%;
     left: 0;
-    right: 0;
+    min-width: 250px;
     background: white;
     border: 1px solid #ddd;
     border-radius: 6px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    z-index: 1000;
-    max-height: 250px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+    z-index: 99999;
+    max-height: 300px;
     overflow-y: auto;
     display: none;
 }
@@ -246,9 +255,9 @@ $pageTitle = 'Reporte ORFS';
 </div>
 
 <!-- Filtros -->
-<div class="card mb-3">
-    <div class="card-body">
-        <div class="filter-row d-flex gap-3" style="flex-wrap: wrap; align-items: flex-end;">
+<div class="card mb-3" style="overflow: visible;">
+    <div class="card-body" style="overflow: visible;">
+        <div class="filter-row" style="display: flex; flex-wrap: wrap; align-items: flex-end; gap: 20px;">
             <!-- Año -->
             <div class="filter-group">
                 <label for="year"><i class="fas fa-calendar"></i> Año:</label>
