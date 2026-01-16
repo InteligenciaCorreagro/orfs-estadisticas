@@ -65,6 +65,7 @@ $pageTitle = 'Reporte ORFS';
     border-top: none;
     border-radius: 0 0 4px 4px;
     overflow-x: auto;
+    max-width: 100%;
 }
 
 .corredor-content.show {
@@ -74,6 +75,14 @@ $pageTitle = 'Reporte ORFS';
 .corredor-content table {
     margin: 0;
     font-size: 12px;
+    min-width: 100%;
+    white-space: nowrap;
+}
+
+.corredor-content th,
+.corredor-content td {
+    white-space: nowrap;
+    padding: 8px 10px;
 }
 
 .corredor-content th {

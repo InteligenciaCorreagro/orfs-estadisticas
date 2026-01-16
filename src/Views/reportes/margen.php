@@ -69,6 +69,7 @@ $pageTitle = 'Reporte Margen';
     border-top: none;
     border-radius: 0 0 4px 4px;
     overflow-x: auto;
+    max-width: 100%;
 }
 
 .corredor-content.show {
@@ -78,13 +79,20 @@ $pageTitle = 'Reporte Margen';
 .corredor-content table {
     margin: 0;
     font-size: 11px;
+    min-width: 100%;
+    white-space: nowrap;
+}
+
+.corredor-content th,
+.corredor-content td {
+    white-space: nowrap;
+    padding: 6px 8px;
 }
 
 .corredor-content th {
     background: #f8f9fa;
     position: sticky;
     top: 0;
-    white-space: nowrap;
 }
 
 /* Filtros mejorados */
