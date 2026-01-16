@@ -121,6 +121,9 @@ class Routes
         Router::post('/bi/archivos-historicos/delete', [HistoricalDataController::class, 'delete'], $biMiddleware);
         Router::get('/bi/archivos-historicos/download', [HistoricalDataController::class, 'download'], $biMiddleware);
 
+        // Benchmark module routes
+        require_once __DIR__ . '/../../modules/benchmark/benchmark.routes.php';
+
         // ==================== PÁGINAS DE ERROR ====================
 
         Router::get('/unauthorized', function() {

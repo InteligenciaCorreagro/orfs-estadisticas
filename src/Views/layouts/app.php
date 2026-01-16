@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 // src/Views/layouts/app.php
 $user = auth();
 $currentYear = date('Y');
@@ -79,9 +79,14 @@ if (!$user) {
                         <li><a href="/admin/carga-archivo"><i class="fas fa-file-upload"></i> Cargar Archivo</a></li>
                         <li><a href="/admin/traders"><i class="fas fa-users"></i> Traders</a></li>
                         <li><a href="/admin/usuarios"><i class="fas fa-user-shield"></i> Usuarios</a></li>
-
-                        <?php if ($user['role'] === 'business_intelligence'): ?>
-                            <li><a href="/bi/archivos-historicos"><i class="fas fa-file-archive"></i> Archivos Históricos</a></li>
+                        <?php if ($user['role'] === 'business_intelligence' || $user['role'] === 'admin'): ?>
+                            <li><a href="/bi/archivos-historicos"><i class="fas fa-file-archive"></i> Archivos Historicos</a></li>
+                            <li class="menu-section"><span><i class="fas fa-chart-line"></i> BENCHMARK</span></li>
+                            <li><a href="/bi/benchmark"><i class="fas fa-chart-line"></i> Dashboard</a></li>
+                            <li><a href="/bi/benchmark/comparativa"><i class="fas fa-users"></i> Comparativa</a></li>
+                            <li><a href="/bi/benchmark/sectores"><i class="fas fa-layer-group"></i> Sectores</a></li>
+                            <li><a href="/bi/benchmark/temporal"><i class="fas fa-calendar-alt"></i> Analisis Temporal</a></li>
+                            <li><a href="/bi/benchmark/reportes"><i class="fas fa-file-export"></i> Reportes</a></li>
                         <?php endif; ?>
 
                         <li class="menu-section"><span><i class="fas fa-chart-bar"></i> REPORTES</span></li>
@@ -131,3 +136,4 @@ if (!$user) {
     <?= $additionalJS ?? '' ?>
 </body>
 </html>
+

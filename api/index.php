@@ -1,7 +1,7 @@
 <?php
-// public/api/index.php
+// api/index.php
 
-require_once __DIR__ . '/../../bootstrap.php';
+require_once __DIR__ . '/../bootstrap.php';
 
 use App\Core\Request;
 use App\Core\Router;
