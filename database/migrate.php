@@ -64,4 +64,5 @@ foreach ($seeds as $seed) {
 echo "\n✓ Migraciones completadas!\n\n";
 echo "Credenciales de acceso:\n";
 echo "Admin: admin@correagro.com / Admin123\n";
-echo "Trader: trader@correagro.com / Trader123\n\n";
+echo "Trader: trader@correagro.com / Trader123\n";
+echo "Business Intelligence: bi@correagro.com / BI123456\n\n";

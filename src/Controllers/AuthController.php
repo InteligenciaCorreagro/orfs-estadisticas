@@ -32,6 +32,7 @@ class AuthController
             if ($userRole === 'trader') {
                 $response->redirect('/trader/dashboard');
             } else {
+                // Admin y Business Intelligence van al dashboard
                 $response->redirect('/dashboard');
             }
             return;
@@ -94,6 +95,7 @@ class AuthController
             if ($userRole === 'trader') {
                 $response->redirect('/trader/dashboard');
             } else {
+                // Admin y Business Intelligence van al dashboard
                 $response->redirect('/dashboard');
             }
         } else {

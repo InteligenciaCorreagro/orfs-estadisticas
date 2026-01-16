@@ -21,6 +21,7 @@ use App\Controllers\Reportes\RuedaController;
 use App\Controllers\Reportes\NegociadoDiarioController;
 use App\Controllers\Reportes\ConsolidadoController;
 use App\Controllers\Trader\MiEstadisticaController;
+use App\Controllers\BusinessIntelligence\HistoricalDataController;
 
 class Routes
 {
@@ -41,9 +42,9 @@ class Routes
 
         // ==================== RUTAS ADMIN ====================
 
-        $adminMiddleware = [AuthMiddleware::class, new RoleMiddleware(['admin'])];
+        $adminMiddleware = [AuthMiddleware::class, new RoleMiddleware(['admin', 'business_intelligence'])];
 
-        // Dashboard (solo admin)
+        // Dashboard (admin y business_intelligence)
         Router::get('/dashboard', [DashboardController::class, 'index'], $adminMiddleware);
 
         // RUTA DE TEST
@@ -105,12 +106,24 @@ class Routes
         Router::get('/reportes/consolidado', [ConsolidadoController::class, 'index'], $reportesMiddleware);
         
         // ==================== TRADER ====================
-        
+
         $traderMiddleware = [AuthMiddleware::class, new RoleMiddleware(['trader'])];
-        
+
         Router::get('/trader/dashboard', [MiEstadisticaController::class, 'dashboard'], $traderMiddleware);
         Router::get('/trader/mis-transacciones', [MiEstadisticaController::class, 'misTransacciones'], $traderMiddleware);
-        
+
+        // ==================== BUSINESS INTELLIGENCE ====================
+
+        $biMiddleware = [AuthMiddleware::class, new RoleMiddleware(['business_intelligence'])];
+
+        Router::get('/bi/archivos-historicos', [HistoricalDataController::class, 'index'], $biMiddleware);
+        Router::post('/bi/archivos-historicos/upload', [HistoricalDataController::class, 'upload'], $biMiddleware);
+        Router::post('/bi/archivos-historicos/delete', [HistoricalDataController::class, 'delete'], $biMiddleware);
+        Router::get('/bi/archivos-historicos/download', [HistoricalDataController::class, 'download'], $biMiddleware);
+
+        // Benchmark module routes
+        require_once __DIR__ . '/../../modules/benchmark/benchmark.routes.php';
+
         // ==================== PÁGINAS DE ERROR ====================
 
         Router::get('/unauthorized', function() {
@@ -141,9 +154,9 @@ class Routes
         
         // ==================== ADMIN API ====================
 
-        $adminMiddleware = [AuthMiddleware::class, new RoleMiddleware(['admin'])];
+        $adminMiddleware = [AuthMiddleware::class, new RoleMiddleware(['admin', 'business_intelligence'])];
 
-        // Dashboard API (solo admin)
+        // Dashboard API (admin y business_intelligence)
         Router::get('/api/dashboard', [DashboardController::class, 'getDashboardData'], $adminMiddleware);
         
         // Traders
@@ -201,12 +214,18 @@ class Routes
         Router::get('/api/reportes/consolidado/resumen-ejecutivo', [ConsolidadoController::class, 'getResumenEjecutivo'], $reportesMiddleware);
         
         // ==================== TRADER API ====================
-        
+
         $traderMiddleware = [AuthMiddleware::class, new RoleMiddleware(['trader'])];
-        
+
         Router::get('/api/trader/estadisticas', [MiEstadisticaController::class, 'getEstadisticas'], $traderMiddleware);
         Router::get('/api/trader/clientes', [MiEstadisticaController::class, 'getMisClientes'], $traderMiddleware);
         Router::get('/api/trader/mis-clientes', [MiEstadisticaController::class, 'getMisClientes'], $traderMiddleware);
         Router::get('/api/trader/rentabilidad', [MiEstadisticaController::class, 'getMiRentabilidad'], $traderMiddleware);
+
+        // ==================== BUSINESS INTELLIGENCE API ====================
+
+        $biMiddleware = [AuthMiddleware::class, new RoleMiddleware(['business_intelligence'])];
+
+        Router::get('/api/bi/stats', [HistoricalDataController::class, 'getStats'], $biMiddleware);
     }
 }

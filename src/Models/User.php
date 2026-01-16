@@ -71,7 +71,12 @@ class User extends Model
     {
         return $this->role === 'trader';
     }
-    
+
+    public function isBusinessIntelligence(): bool
+    {
+        return $this->role === 'business_intelligence';
+    }
+
     public function hasRole(string $role): bool
     {
         return $this->role === $role;
