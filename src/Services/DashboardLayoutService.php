@@ -22,6 +22,9 @@ class DashboardLayoutService
             ['id' => 'chart_top_corredores', 'enabled' => true],
             ['id' => 'chart_transacciones_mes', 'enabled' => false],
             ['id' => 'chart_comision_mes', 'enabled' => false],
+            ['id' => 'chart_top_clientes_negociado', 'enabled' => true],
+            ['id' => 'chart_top_clientes_comision', 'enabled' => true],
+            ['id' => 'insights_rankings', 'enabled' => true],
             ['id' => 'table_por_mes', 'enabled' => true],
             ['id' => 'table_ultimas_ruedas', 'enabled' => true],
             ['id' => 'table_top_clientes', 'enabled' => false]
@@ -46,7 +49,14 @@ class DashboardLayoutService
             return $this->getDefaultLayout();
         }
 
-        return $this->normalizeLayout($decoded);
+        $normalized = $this->normalizeLayout($decoded);
+        foreach ($normalized as $item) {
+            if (!empty($item['enabled'])) {
+                return $normalized;
+            }
+        }
+
+        return $this->getDefaultLayout();
     }
 
     public function saveLayout(int $userId, array $layout): void

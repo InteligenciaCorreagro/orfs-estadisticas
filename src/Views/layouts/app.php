@@ -63,12 +63,12 @@ if (!$user) {
                                     <li><a href="/reportes/margen"><i class="fas fa-percentage"></i> Margen</a></li>
                                     <li><a href="/reportes/rueda"><i class="fas fa-circle-notch"></i> Ruedas</a></li>
                                     <li><a href="/reportes/negociado-diario"><i class="fas fa-calendar-day"></i> Negociado Diario</a></li>
-                                    <li><a href="/reportes/consolidado"><i class="fas fa-file-contract"></i> Consolidado</a></li>
                                 </ul>
                             </li>
                     <?php endif; ?>
 
                     <?php if ($user['role'] === 'trader'): ?>
+                        <li><a href="/trader/dashboard"><i class="fas fa-chart-line"></i> Mi Dashboard</a></li>
                         <li class="menu-section menu-accordion">
                             <button type="button" class="menu-accordion-toggle" aria-expanded="false">
                                 <span><i class="fas fa-chart-bar"></i> Reportes</span>
@@ -79,16 +79,10 @@ if (!$user) {
                                 <li><a href="/reportes/margen"><i class="fas fa-percentage"></i> Margen</a></li>
                                 <li><a href="/reportes/rueda"><i class="fas fa-circle-notch"></i> Ruedas</a></li>
                                 <li><a href="/reportes/negociado-diario"><i class="fas fa-calendar-day"></i> Negociado Diario</a></li>
-                                <li><a href="/reportes/consolidado"><i class="fas fa-file-contract"></i> Consolidado</a></li>
                             </ul>
                         </li>
                     <?php endif; ?>
 
-                    <?php if ($user['role'] === 'trader'): ?>
-                        <li class="menu-section"><span><i class="fas fa-user"></i> MI CUENTA</span></li>
-                        <li><a href="/trader/dashboard"><i class="fas fa-chart-line"></i> Mi Dashboard</a></li>
-                        <li><a href="/trader/mis-transacciones"><i class="fas fa-exchange-alt"></i> Mis Transacciones</a></li>
-                    <?php endif; ?>
                 </ul>
             </nav>
             <div class="sidebar-profile">

@@ -10,7 +10,7 @@ class RuedaReporteService
     /**
      * Obtener listado de ruedas del año
      */
-    public function obtenerRuedasDelAño(int $year): array
+    public function obtenerRuedasDelAño(int $year, array|string|null $corredor = null): array
     {
         $sql = "
             SELECT DISTINCT 
@@ -22,17 +22,21 @@ class RuedaReporteService
                 SUM(comi_corr) AS total_comision
             FROM orfs_transactions
             WHERE year = :year
-            GROUP BY rueda_no, fecha
-            ORDER BY rueda_no ASC
         ";
+
+        $params = ['year' => $year];
+        $sql = $this->appendCorredorFilter($sql, $corredor, $params);
+
+        $sql .= " GROUP BY rueda_no, fecha
+                  ORDER BY rueda_no ASC";
         
-        return Database::fetchAll($sql, ['year' => $year]);
+        return Database::fetchAll($sql, $params);
     }
     
     /**
      * Obtener detalle de una rueda específica
      */
-    public function obtenerDetalleRueda(int $ruedaNo, int $year): array
+    public function obtenerDetalleRueda(int $ruedaNo, int $year, array|string|null $corredor = null): array
     {
         $sql = "
             SELECT 
@@ -45,19 +49,23 @@ class RuedaReporteService
                 (comi_corr - comi_bna) AS margen
             FROM orfs_transactions
             WHERE rueda_no = :rueda AND year = :year
-            ORDER BY ciudad, corredor, nombre
         ";
-        
-        return Database::fetchAll($sql, [
+
+        $params = [
             'rueda' => $ruedaNo,
             'year' => $year
-        ]);
+        ];
+        $sql = $this->appendCorredorFilter($sql, $corredor, $params);
+
+        $sql .= " ORDER BY ciudad, corredor, nombre";
+        
+        return Database::fetchAll($sql, $params);
     }
     
     /**
      * Obtener resumen por ciudad de una rueda
      */
-    public function obtenerResumenPorCiudad(int $ruedaNo, int $year): array
+    public function obtenerResumenPorCiudad(int $ruedaNo, int $year, array|string|null $corredor = null): array
     {
         $sql = "
             SELECT 
@@ -69,20 +77,24 @@ class RuedaReporteService
                 SUM(comi_corr - comi_bna) AS total_margen
             FROM orfs_transactions
             WHERE rueda_no = :rueda AND year = :year
-            GROUP BY ciudad
-            ORDER BY total_transado DESC
         ";
-        
-        return Database::fetchAll($sql, [
+
+        $params = [
             'rueda' => $ruedaNo,
             'year' => $year
-        ]);
+        ];
+        $sql = $this->appendCorredorFilter($sql, $corredor, $params);
+
+        $sql .= " GROUP BY ciudad
+                  ORDER BY total_transado DESC";
+        
+        return Database::fetchAll($sql, $params);
     }
     
     /**
      * Obtener resumen por corredor de una rueda
      */
-    public function obtenerResumenPorCorredor(int $ruedaNo, int $year): array
+    public function obtenerResumenPorCorredor(int $ruedaNo, int $year, array|string|null $corredor = null): array
     {
         $sql = "
             SELECT 
@@ -94,23 +106,38 @@ class RuedaReporteService
                 SUM(comi_corr - comi_bna) AS total_margen
             FROM orfs_transactions
             WHERE rueda_no = :rueda AND year = :year
-            GROUP BY corredor
-            ORDER BY total_transado DESC
         ";
-        
-        return Database::fetchAll($sql, [
+
+        $params = [
             'rueda' => $ruedaNo,
             'year' => $year
-        ]);
+        ];
+        $sql = $this->appendCorredorFilter($sql, $corredor, $params);
+
+        $sql .= " GROUP BY corredor
+                  ORDER BY total_transado DESC";
+        
+        return Database::fetchAll($sql, $params);
     }
     
     /**
      * Comparar múltiples ruedas
      */
-    public function compararRuedas(array $ruedas, int $year): array
+    public function compararRuedas(array $ruedas, int $year, array|string|null $corredor = null): array
     {
-        $placeholders = implode(',', array_fill(0, count($ruedas), '?'));
-        
+        $placeholders = [];
+        $params = ['year' => $year];
+        foreach ($ruedas as $index => $rueda) {
+            $key = 'rueda' . $index;
+            $placeholders[] = ':' . $key;
+            $params[$key] = $rueda;
+        }
+
+        $conditions = [
+            'rueda_no IN (' . implode(',', $placeholders) . ')',
+            'year = :year'
+        ];
+
         $sql = "
             SELECT 
                 rueda_no,
@@ -123,12 +150,12 @@ class RuedaReporteService
                 SUM(comi_corr - comi_bna) AS total_margen,
                 AVG(negociado) AS promedio_transaccion
             FROM orfs_transactions
-            WHERE rueda_no IN ({$placeholders}) AND year = ?
-            GROUP BY rueda_no, fecha
-            ORDER BY rueda_no ASC
+            WHERE " . implode(' AND ', $conditions) . "
         ";
-        
-        $params = array_merge($ruedas, [$year]);
+
+        $sql = $this->appendCorredorFilter($sql, $corredor, $params);
+        $sql .= " GROUP BY rueda_no, fecha
+            ORDER BY rueda_no ASC";
         
         return Database::fetchAll($sql, $params);
     }
@@ -136,7 +163,7 @@ class RuedaReporteService
     /**
      * Obtener estadísticas de rueda
      */
-    public function obtenerEstadisticasRueda(int $ruedaNo, int $year): array
+    public function obtenerEstadisticasRueda(int $ruedaNo, int $year, array|string|null $corredor = null): array
     {
         $sql = "
             SELECT 
@@ -153,14 +180,49 @@ class RuedaReporteService
                 fecha
             FROM orfs_transactions
             WHERE rueda_no = :rueda AND year = :year
-            GROUP BY fecha
         ";
-        
-        $result = Database::fetch($sql, [
+
+        $params = [
             'rueda' => $ruedaNo,
             'year' => $year
-        ]);
+        ];
+        $sql = $this->appendCorredorFilter($sql, $corredor, $params);
+
+        $sql .= " GROUP BY fecha";
+        
+        $result = Database::fetch($sql, $params);
         
         return $result ?: [];
+    }
+
+    private function appendCorredorFilter(string $sql, array|string|null $corredor, array &$params): string
+    {
+        if (!$corredor) {
+            return $sql;
+        }
+
+        if (is_array($corredor)) {
+            $placeholders = [];
+            $index = 0;
+            foreach ($corredor as $nombre) {
+                $nombre = trim((string) $nombre);
+                if ($nombre === '') {
+                    continue;
+                }
+                $key = 'corredor' . $index;
+                $placeholders[] = 'LOWER(TRIM(:' . $key . '))';
+                $params[$key] = $nombre;
+                $index++;
+            }
+
+            if (!$placeholders) {
+                return $sql;
+            }
+
+            return $sql . ' AND LOWER(TRIM(corredor)) IN (' . implode(',', $placeholders) . ')';
+        }
+
+        $params['corredor'] = trim((string) $corredor);
+        return $sql . ' AND LOWER(TRIM(corredor)) = LOWER(TRIM(:corredor))';
     }
 }

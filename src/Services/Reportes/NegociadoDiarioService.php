@@ -10,10 +10,10 @@ class NegociadoDiarioService
     /**
      * Obtener negociados por cliente con cada rueda como columna
      */
-    public function obtenerNegociadosPorCliente(int $year, ?string $corredor = null): array
+    public function obtenerNegociadosPorCliente(int $year, array|string|null $corredor = null): array
     {
         // Primero obtener todas las ruedas del año
-        $ruedas = $this->obtenerRuedasDelAño($year);
+        $ruedas = $this->obtenerRuedasDelAño($year, $corredor);
         
         if (empty($ruedas)) {
             return [];
@@ -37,11 +37,7 @@ class NegociadoDiarioService
         ";
         
         $params = ['year' => $year];
-        
-        if ($corredor) {
-            $sql .= " AND corredor = :corredor";
-            $params['corredor'] = $corredor;
-        }
+        $sql = $this->appendCorredorFilter($sql, $corredor, $params);
         
         $sql .= " GROUP BY nit, nombre, corredor ORDER BY corredor, nombre";
         
@@ -57,7 +53,7 @@ class NegociadoDiarioService
     /**
      * Obtener ruedas del año con información básica
      */
-    private function obtenerRuedasDelAño(int $year): array
+    private function obtenerRuedasDelAño(int $year, array|string|null $corredor = null): array
     {
         $sql = "
             SELECT DISTINCT 
@@ -65,10 +61,13 @@ class NegociadoDiarioService
                 DATE_FORMAT(fecha, '%d/%m/%Y') AS fecha
             FROM orfs_transactions
             WHERE year = :year
-            ORDER BY rueda_no ASC
         ";
-        
-        return Database::fetchAll($sql, ['year' => $year]);
+
+        $params = ['year' => $year];
+        $sql = $this->appendCorredorFilter($sql, $corredor, $params);
+        $sql .= " ORDER BY rueda_no ASC";
+
+        return Database::fetchAll($sql, $params);
     }
     
     /**
@@ -125,7 +124,7 @@ class NegociadoDiarioService
     /**
      * Obtener resumen agrupado por trader para vista de negociado diario
      */
-    public function obtenerResumenPorTrader(int $year, ?string $corredor = null): array
+    public function obtenerResumenPorTrader(int $year, array|string|null $corredor = null): array
     {
         $sql = "
             SELECT
@@ -140,11 +139,7 @@ class NegociadoDiarioService
         ";
 
         $params = ['year' => $year];
-
-        if ($corredor) {
-            $sql .= " AND corredor = :corredor";
-            $params['corredor'] = $corredor;
-        }
+        $sql = $this->appendCorredorFilter($sql, $corredor, $params);
 
         $sql .= " GROUP BY corredor ORDER BY corredor ASC";
 
@@ -154,7 +149,7 @@ class NegociadoDiarioService
     /**
      * Obtener detalle mensual de un trader específico con todos sus clientes
      */
-    public function obtenerDetalleMensualPorTrader(int $year, string $trader): array
+    public function obtenerDetalleMensualPorTrader(int $year, array|string|null $trader): array
     {
         $sql = "
             SELECT
@@ -168,22 +163,22 @@ class NegociadoDiarioService
                 SUM(comi_corr) AS comision,
                 SUM(comi_corr - comi_bna) AS margen
             FROM orfs_transactions
-            WHERE year = :year AND corredor = :trader
+            WHERE year = :year
             GROUP BY nit, nombre, corredor, rueda_no, mes, mes_num
             ORDER BY mes_num ASC, nombre ASC, rueda_no ASC
         ";
 
-        return Database::fetchAll($sql, [
-            'year' => $year,
-            'trader' => $trader
-        ]);
+        $params = ['year' => $year];
+        $sql = $this->appendCorredorFilter($sql, $trader, $params);
+
+        return Database::fetchAll($sql, $params);
     }
 
     /**
      * Obtener vista matricial de negociados: Cliente x Rueda
      * Para mostrar todos los clientes con sus transacciones por rueda
      */
-    public function obtenerVistaMatricialNegociados(int $year, ?string $corredor = null): array
+    public function obtenerVistaMatricialNegociados(int $year, array|string|null $corredor = null): array
     {
         // Primero obtener todas las ruedas del año ordenadas
         $sqlRuedas = "
@@ -194,10 +189,7 @@ class NegociadoDiarioService
 
         $paramsRuedas = ['year' => $year];
 
-        if ($corredor) {
-            $sqlRuedas .= " AND corredor = :corredor";
-            $paramsRuedas['corredor'] = $corredor;
-        }
+        $sqlRuedas = $this->appendCorredorFilter($sqlRuedas, $corredor, $paramsRuedas);
 
         $sqlRuedas .= " ORDER BY rueda_no ASC";
 
@@ -219,10 +211,7 @@ class NegociadoDiarioService
 
         $paramsData = ['year' => $year];
 
-        if ($corredor) {
-            $sqlData .= " AND corredor = :corredor";
-            $paramsData['corredor'] = $corredor;
-        }
+        $sqlData = $this->appendCorredorFilter($sqlData, $corredor, $paramsData);
 
         $sqlData .= " GROUP BY nit, nombre, corredor, rueda_no, mes, mes_num ORDER BY nombre ASC, rueda_no ASC";
 
@@ -232,5 +221,36 @@ class NegociadoDiarioService
             'ruedas' => $ruedas,
             'data' => $data
         ];
+    }
+
+    private function appendCorredorFilter(string $sql, array|string|null $corredor, array &$params): string
+    {
+        if (!$corredor) {
+            return $sql;
+        }
+
+        if (is_array($corredor)) {
+            $placeholders = [];
+            $index = 0;
+            foreach ($corredor as $nombre) {
+                $nombre = trim((string) $nombre);
+                if ($nombre === '') {
+                    continue;
+                }
+                $key = 'corredor' . $index;
+                $placeholders[] = 'LOWER(TRIM(:' . $key . '))';
+                $params[$key] = $nombre;
+                $index++;
+            }
+
+            if (!$placeholders) {
+                return $sql;
+            }
+
+            return $sql . ' AND LOWER(TRIM(corredor)) IN (' . implode(',', $placeholders) . ')';
+        }
+
+        $params['corredor'] = trim((string) $corredor);
+        return $sql . ' AND LOWER(TRIM(corredor)) = LOWER(TRIM(:corredor))';
     }
 }

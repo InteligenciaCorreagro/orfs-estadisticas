@@ -231,6 +231,20 @@ $pageTitle = 'Reporte Margen';
     top: 0;
 }
 
+.multi-select-search {
+    padding: 8px 12px;
+    border-bottom: 1px solid #eee;
+    background: #fff;
+}
+
+.multi-select-search input {
+    width: 100%;
+    padding: 6px 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 12px;
+}
+
 .multi-select-dropdown .option {
     padding: 8px 12px;
     cursor: pointer;
@@ -475,6 +489,9 @@ $pageTitle = 'Reporte Margen';
                                 <strong>Seleccionar todos</strong>
                             </label>
                         </div>
+                        <div class="multi-select-search">
+                            <input type="text" id="clientesSearch" placeholder="Buscar cliente o NIT" oninput="filterClientesOptions()">
+                        </div>
                         <div id="clientesOptions"></div>
                     </div>
                 </div>
@@ -676,6 +693,22 @@ function updateClientesSelection() {
         visibleClientes.length > 0 && selectedClientes.length === visibleClientes.length;
 }
 
+function applyClientesSearchFilter() {
+    const input = document.getElementById('clientesSearch');
+    if (!input) {
+        return;
+    }
+    const term = (input.value || '').toLowerCase().trim();
+    document.querySelectorAll('#clientesOptions .option').forEach(option => {
+        const text = option.textContent.toLowerCase();
+        option.style.display = term === '' || text.includes(term) ? '' : 'none';
+    });
+}
+
+function filterClientesOptions() {
+    applyClientesSearchFilter();
+}
+
 function getVisibleClientes() {
     if (selectedCorredores.length === 0) {
         return [];
@@ -717,6 +750,7 @@ function updateClientesOptions() {
     lastVisibleClientes = [...visibleClientes];
 
     updateClientesSelection();
+    applyClientesSearchFilter();
 }
 
 async function loadData() {
@@ -781,6 +815,7 @@ function initClientesOptions() {
         `;
     }).join('');
     updateClientesSelection();
+    applyClientesSearchFilter();
 }
 
 function applyFilters() {

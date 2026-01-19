@@ -19,7 +19,6 @@ use App\Controllers\Reportes\OrfsController;
 use App\Controllers\Reportes\MargenController;
 use App\Controllers\Reportes\RuedaController;
 use App\Controllers\Reportes\NegociadoDiarioController;
-use App\Controllers\Reportes\ConsolidadoController;
 use App\Controllers\Trader\MiEstadisticaController;
 use App\Controllers\BusinessIntelligence\HistoricalDataController;
 
@@ -102,15 +101,11 @@ class Routes
         Router::get('/reportes/negociado-diario', [NegociadoDiarioController::class, 'index'], $reportesMiddleware);
         Router::get('/reportes/negociado-diario/exportar', [NegociadoDiarioController::class, 'exportarExcel'], $reportesMiddleware);
         
-        // Consolidado
-        Router::get('/reportes/consolidado', [ConsolidadoController::class, 'index'], $reportesMiddleware);
-        
         // ==================== TRADER ====================
 
         $traderMiddleware = [AuthMiddleware::class, new RoleMiddleware(['trader'])];
 
         Router::get('/trader/dashboard', [MiEstadisticaController::class, 'dashboard'], $traderMiddleware);
-        Router::get('/trader/mis-transacciones', [MiEstadisticaController::class, 'misTransacciones'], $traderMiddleware);
 
         // ==================== BUSINESS INTELLIGENCE ====================
 
@@ -211,10 +206,6 @@ class Routes
         Router::get('/api/reportes/negociado-diario/trader/:trader/detalle', [NegociadoDiarioController::class, 'getDetalleMensualTrader'], $reportesMiddleware);
         Router::get('/api/reportes/negociado-diario/matricial', [NegociadoDiarioController::class, 'getVistaMatricial'], $reportesMiddleware);
 
-        // Consolidado
-        Router::get('/api/reportes/consolidado', [ConsolidadoController::class, 'getDashboard'], $reportesMiddleware);
-        Router::get('/api/reportes/consolidado/resumen-ejecutivo', [ConsolidadoController::class, 'getResumenEjecutivo'], $reportesMiddleware);
-        
         // ==================== TRADER API ====================
 
         $traderMiddleware = [AuthMiddleware::class, new RoleMiddleware(['trader'])];

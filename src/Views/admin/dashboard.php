@@ -50,24 +50,61 @@ $pageTitle = 'Dashboard';
 <div id="dashboardGrid" class="dashboard-grid"></div>
 
 <?php
+$jsonFlags = JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT;
+if (defined('JSON_INVALID_UTF8_SUBSTITUTE')) {
+    $jsonFlags |= JSON_INVALID_UTF8_SUBSTITUTE;
+}
+
+$dashboardJson = json_encode($dashboard, $jsonFlags);
+if ($dashboardJson === false) {
+    $dashboardJson = 'null';
+}
+$layoutJson = json_encode($layout, $jsonFlags);
+if ($layoutJson === false) {
+    $layoutJson = '[]';
+}
+$defaultLayoutJson = json_encode($defaultLayout, $jsonFlags);
+if ($defaultLayoutJson === false) {
+    $defaultLayoutJson = '[]';
+}
+
 $additionalJS = <<<'JS'
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script>
-const dashboardData = <?= json_encode($dashboard, JSON_UNESCAPED_UNICODE) ?>;
-const savedLayout = <?= json_encode($layout, JSON_UNESCAPED_UNICODE) ?>;
-const defaultLayout = <?= json_encode($defaultLayout, JSON_UNESCAPED_UNICODE) ?>;
-const currentYear = <?= (int) $year ?>;
+const dashboardData = __DASHBOARD_JSON__;
+const savedLayout = __LAYOUT_JSON__;
+const defaultLayout = __DEFAULT_LAYOUT_JSON__;
+const currentYear = __CURRENT_YEAR__;
+
+const chartTypeLabels = {
+    bar: 'Barras',
+    doughnut: 'Donas',
+    line: 'Flechas'
+};
+const chartPalette = [
+    '#16a34a',
+    '#0ea5e9',
+    '#f97316',
+    '#8b5cf6',
+    '#ef4444',
+    '#14b8a6',
+    '#eab308',
+    '#6366f1',
+    '#10b981',
+    '#f59e0b'
+];
 
 const widgetRegistry = {
     kpi_total_transacciones: {
-        title: 'Total Transacciones',
+        title: 'Total Registros',
         group: 'KPIs',
         size: 'small',
         className: 'kpi-card kpi-purple',
         html: () => `
             <div class="card-body">
-                <div class="kpi-title">Total Transacciones</div>
+                <div class="kpi-title">Total Registros</div>
                 <div class="kpi-value">${formatNumberValue(dashboardData.kpis?.total_transacciones)}</div>
+                ${buildKpiTrend('total_transacciones')}
             </div>
         `
     },
@@ -80,6 +117,7 @@ const widgetRegistry = {
             <div class="card-body">
                 <div class="kpi-title">Total Negociado</div>
                 <div class="kpi-value">${formatMoney(dashboardData.kpis?.total_negociado)}</div>
+                ${buildKpiTrend('total_negociado')}
             </div>
         `
     },
@@ -92,6 +130,7 @@ const widgetRegistry = {
             <div class="card-body">
                 <div class="kpi-title">Total Comision</div>
                 <div class="kpi-value">${formatMoney(dashboardData.kpis?.total_comision)}</div>
+                ${buildKpiTrend('total_comision')}
             </div>
         `
     },
@@ -104,6 +143,7 @@ const widgetRegistry = {
             <div class="card-body">
                 <div class="kpi-title">Total Ruedas</div>
                 <div class="kpi-value">${formatNumberValue(dashboardData.kpis?.total_ruedas)}</div>
+                ${buildKpiTrend('total_ruedas')}
             </div>
         `
     },
@@ -116,6 +156,7 @@ const widgetRegistry = {
             <div class="card-body">
                 <div class="kpi-title">Total Clientes</div>
                 <div class="kpi-value">${formatNumberValue(dashboardData.kpis?.total_clientes)}</div>
+                ${buildKpiTrend('total_clientes')}
             </div>
         `
     },
@@ -128,6 +169,7 @@ const widgetRegistry = {
             <div class="card-body">
                 <div class="kpi-title">Total Margen</div>
                 <div class="kpi-value">${formatMoney(dashboardData.kpis?.total_margen)}</div>
+                ${buildKpiTrend('total_margen')}
             </div>
         `
     },
@@ -135,29 +177,49 @@ const widgetRegistry = {
         title: 'Negociado por Mes',
         group: 'Graficos',
         size: 'full',
-        html: () => chartCardTemplate('chart_negociado_mes', 'Negociado por Mes'),
-        onMount: (card) => renderLineChart(card, 'chart_negociado_mes', 'Negociado', 'total_negociado', '#16a34a')
+        html: () => chartCardTemplate('chart_negociado_mes', 'Negociado por Mes', { defaultType: 'line' }),
+        onMount: (card) => renderMetricChart(card, 'chart_negociado_mes', 'Negociado', 'total_negociado', '#16a34a', 'line')
     },
     chart_comision_mes: {
         title: 'Comision por Mes',
         group: 'Graficos',
         size: 'full',
-        html: () => chartCardTemplate('chart_comision_mes', 'Comision por Mes'),
-        onMount: (card) => renderLineChart(card, 'chart_comision_mes', 'Comision', 'total_comision', '#0ea5e9')
+        html: () => chartCardTemplate('chart_comision_mes', 'Comision por Mes', { defaultType: 'line' }),
+        onMount: (card) => renderMetricChart(card, 'chart_comision_mes', 'Comision', 'total_comision', '#0ea5e9', 'line')
     },
     chart_transacciones_mes: {
         title: 'Transacciones por Mes',
         group: 'Graficos',
         size: 'full',
-        html: () => chartCardTemplate('chart_transacciones_mes', 'Transacciones por Mes'),
-        onMount: (card) => renderBarChart(card, 'chart_transacciones_mes', 'Transacciones', 'total_transacciones', '#8b5cf6')
+        html: () => chartCardTemplate('chart_transacciones_mes', 'Transacciones por Mes', { defaultType: 'bar' }),
+        onMount: (card) => renderMetricChart(card, 'chart_transacciones_mes', 'Transacciones', 'total_transacciones', '#8b5cf6', 'bar')
     },
     chart_top_corredores: {
-        title: 'Top Corredores por Volumen',
+        title: 'Mejores Traders por Margen',
         group: 'Graficos',
         size: 'full',
-        html: () => chartCardTemplate('chart_top_corredores', 'Top Corredores por Volumen'),
+        html: () => chartCardTemplate('chart_top_corredores', 'Mejores Traders por Margen', { defaultType: 'bar', showTrend: false }),
         onMount: (card) => renderTopCorredoresChart(card)
+    },
+    chart_top_clientes_negociado: {
+        title: 'Clientes que mas transan',
+        group: 'Graficos',
+        size: 'full',
+        html: () => chartCardTemplate('chart_top_clientes_negociado', 'Clientes que mas transan', { defaultType: 'bar', showTrend: false }),
+        onMount: (card) => renderTopClientesChart(card, 'chart_top_clientes_negociado', dashboardData.top_clientes || [], 'Negociado', 'total_negociado', '#f97316')
+    },
+    chart_top_clientes_comision: {
+        title: 'Ranking de clientes por comision generada',
+        group: 'Graficos',
+        size: 'full',
+        html: () => chartCardTemplate('chart_top_clientes_comision', 'Ranking de clientes por comision generada', { defaultType: 'bar', showTrend: false }),
+        onMount: (card) => renderTopClientesChart(card, 'chart_top_clientes_comision', dashboardData.top_clientes_comision || [], 'Comision', 'total_comision', '#ef4444')
+    },
+    insights_rankings: {
+        title: 'Rankings clave',
+        group: 'Insights',
+        size: 'full',
+        html: () => buildRankingInsights()
     },
     table_por_mes: {
         title: 'Resumen Mensual',
@@ -399,10 +461,26 @@ function destroyCharts() {
     Object.keys(chartInstances).forEach(key => delete chartInstances[key]);
 }
 
-function chartCardTemplate(id, title) {
+function chartCardTemplate(id, title, config = {}) {
+    const types = config.types || ['bar', 'doughnut', 'line'];
+    const defaultType = config.defaultType || types[0];
+    const showTrend = config.showTrend !== false;
+    const options = types.map(type => `
+        <option value="${type}" ${type === defaultType ? 'selected' : ''}>
+            ${chartTypeLabels[type] || type}
+        </option>
+    `).join('');
+    const trendBadge = showTrend ? `<span class="trend-badge trend-flat" data-trend-id="${id}"></span>` : '';
+
     return `
-        <div class="card-header">
-            <h3 class="card-title">${title}</h3>
+        <div class="card-header chart-card-header">
+            <div class="chart-card-title">
+                <h3 class="card-title">${title}</h3>
+                ${trendBadge}
+            </div>
+            <select class="chart-type-select" data-chart-select="${id}">
+                ${options}
+            </select>
         </div>
         <div class="card-body">
             <div class="chart-wrapper">
@@ -412,52 +490,78 @@ function chartCardTemplate(id, title) {
     `;
 }
 
-function renderLineChart(card, widgetId, label, key, color) {
-    const rows = dashboardData.por_mes || [];
-    const labels = rows.map(row => row.mes);
-    const values = rows.map(row => parseFloat(row[key] || 0));
-
-    if (!labels.length || typeof Chart === 'undefined') {
-        showEmptyChart(card, 'No hay datos para graficar.');
-        return;
+function buildKpiTrend(key) {
+    const trend = calculateTrend(getMonthlySeries(key));
+    if (!trend) {
+        return '';
     }
+    const icon = trend.direction === 'up' ? 'fa-arrow-up' : trend.direction === 'down' ? 'fa-arrow-down' : 'fa-minus';
+    const pct = Math.abs(trend.pct).toFixed(1);
+    return `
+        <div class="kpi-trend">
+            <span class="trend-badge trend-${trend.direction}">
+                <i class="fas ${icon}"></i>${pct}% mes
+            </span>
+        </div>
+    `;
+}
 
-    const canvas = card.querySelector('canvas');
-    const ctx = canvas.getContext('2d');
-    chartInstances[widgetId] = new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels,
-            datasets: [{
-                label,
-                data: values,
-                borderColor: color,
-                backgroundColor: color + '22',
-                fill: true,
-                tension: 0.35
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: { display: false }
-            },
-            scales: {
-                y: {
-                    ticks: {
-                        callback: value => formatCompact(value)
-                    }
-                }
-            }
+function getMonthlySeries(key) {
+    return (dashboardData.por_mes || []).map(row => {
+        if (row[key] === undefined || row[key] === null) {
+            return Number.NaN;
         }
+        const value = parseFloat(row[key]);
+        return Number.isFinite(value) ? value : Number.NaN;
     });
 }
 
-function renderBarChart(card, widgetId, label, key, color) {
-    const rows = dashboardData.por_mes || [];
-    const labels = rows.map(row => row.mes);
-    const values = rows.map(row => parseFloat(row[key] || 0));
+function calculateTrend(values) {
+    const clean = values.filter(value => Number.isFinite(value));
+    if (clean.length < 2) {
+        return null;
+    }
+    const last = clean[clean.length - 1];
+    const prev = clean[clean.length - 2];
+    const delta = last - prev;
+    const pct = prev ? (delta / prev) * 100 : 0;
+    const direction = delta > 0 ? 'up' : delta < 0 ? 'down' : 'flat';
+    return { direction, pct };
+}
+
+function updateTrendBadge(card, widgetId, values) {
+    const badge = card.querySelector(`[data-trend-id="${widgetId}"]`);
+    if (!badge) {
+        return;
+    }
+    const trend = calculateTrend(values);
+    if (!trend) {
+        badge.textContent = 'Sin datos';
+        badge.className = 'trend-badge trend-flat';
+        return;
+    }
+    const icon = trend.direction === 'up' ? 'fa-arrow-up' : trend.direction === 'down' ? 'fa-arrow-down' : 'fa-minus';
+    const pct = Math.abs(trend.pct).toFixed(1);
+    badge.className = `trend-badge trend-${trend.direction}`;
+    badge.innerHTML = `<i class="fas ${icon}"></i>${pct}% mes`;
+}
+
+function buildPalette(count) {
+    const colors = [];
+    for (let i = 0; i < count; i += 1) {
+        colors.push(chartPalette[i % chartPalette.length]);
+    }
+    return colors;
+}
+
+function renderSelectableChart(card, widgetId, config) {
+    const labels = config.labels || [];
+    const values = (config.values || []).map(value => (Number.isFinite(value) ? value : 0));
+    const color = config.color || '#16a34a';
+    const defaultType = config.defaultType || 'bar';
+    const label = config.label || '';
+    const indexAxis = config.indexAxis || null;
+    const multiColor = config.multiColor || false;
 
     if (!labels.length || typeof Chart === 'undefined') {
         showEmptyChart(card, 'No hay datos para graficar.');
@@ -466,70 +570,121 @@ function renderBarChart(card, widgetId, label, key, color) {
 
     const canvas = card.querySelector('canvas');
     const ctx = canvas.getContext('2d');
-    chartInstances[widgetId] = new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels,
-            datasets: [{
-                label,
-                data: values,
-                backgroundColor: color
-            }]
-        },
-        options: {
+    const select = card.querySelector(`[data-chart-select="${widgetId}"]`);
+
+    const renderChart = (type) => {
+        if (chartInstances[widgetId]) {
+            chartInstances[widgetId].destroy();
+        }
+
+        const dataset = {
+            label,
+            data: values
+        };
+
+        if (type === 'line') {
+            dataset.borderColor = color;
+            dataset.backgroundColor = color + '22';
+            dataset.fill = true;
+            dataset.tension = 0.35;
+        } else if (type === 'doughnut') {
+            dataset.backgroundColor = buildPalette(values.length);
+            dataset.borderWidth = 0;
+        } else {
+            dataset.backgroundColor = multiColor ? buildPalette(values.length) : color;
+        }
+
+        const options = {
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
                 legend: { display: false }
-            },
-            scales: {
-                y: {
-                    ticks: {
-                        callback: value => formatCompact(value)
+            }
+        };
+
+        if (type !== 'doughnut') {
+            const useHorizontal = type === 'bar' && indexAxis === 'y';
+            options.scales = useHorizontal
+                ? {
+                    x: {
+                        ticks: {
+                            callback: value => formatCompact(value)
+                        }
                     }
                 }
+                : {
+                    y: {
+                        ticks: {
+                            callback: value => formatCompact(value)
+                        }
+                    }
+                };
+            if (type === 'bar' && indexAxis) {
+                options.indexAxis = indexAxis;
             }
         }
+
+        chartInstances[widgetId] = new Chart(ctx, {
+            type,
+            data: {
+                labels,
+                datasets: [dataset]
+            },
+            options
+        });
+    };
+
+    const initialType = select ? (select.value || defaultType) : defaultType;
+    renderChart(initialType);
+    updateTrendBadge(card, widgetId, values);
+
+    if (select) {
+        select.addEventListener('change', () => renderChart(select.value));
+    }
+}
+
+function renderMetricChart(card, widgetId, label, key, color, defaultType) {
+    const rows = dashboardData.por_mes || [];
+    const labels = rows.map(row => row.mes);
+    const values = rows.map(row => parseFloat(row[key] || 0));
+
+    renderSelectableChart(card, widgetId, {
+        labels,
+        values,
+        label,
+        color,
+        defaultType
     });
 }
 
 function renderTopCorredoresChart(card) {
     const rows = (dashboardData.por_corredor || []).slice(0, 10);
     const labels = rows.map(row => row.corredor);
-    const values = rows.map(row => parseFloat(row.total_negociado || 0));
+    const values = rows.map(row => parseFloat(row.total_margen || 0));
 
-    if (!labels.length || typeof Chart === 'undefined') {
-        showEmptyChart(card, 'No hay datos para graficar.');
-        return;
-    }
+    renderSelectableChart(card, 'chart_top_corredores', {
+        labels,
+        values,
+        label: 'Margen',
+        color: '#16a34a',
+        defaultType: 'bar',
+        indexAxis: 'y',
+        multiColor: true
+    });
+}
 
-    const canvas = card.querySelector('canvas');
-    const ctx = canvas.getContext('2d');
-    chartInstances.chart_top_corredores = new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels,
-            datasets: [{
-                label: 'Negociado',
-                data: values,
-                backgroundColor: '#16a34a'
-            }]
-        },
-        options: {
-            indexAxis: 'y',
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: { display: false }
-            },
-            scales: {
-                x: {
-                    ticks: {
-                        callback: value => formatCompact(value)
-                    }
-                }
-            }
-        }
+function renderTopClientesChart(card, widgetId, rows, label, valueKey, color) {
+    const labels = rows.slice(0, 10).map(row => row.cliente);
+    const values = rows.slice(0, 10).map(row => parseFloat(row[valueKey] || 0));
+
+    renderSelectableChart(card, widgetId, {
+        labels,
+        values,
+        label,
+        color,
+        defaultType: 'bar',
+        indexAxis: 'y',
+        multiColor: true
     });
 }
 
@@ -538,6 +693,73 @@ function showEmptyChart(card, message) {
     if (wrapper) {
         wrapper.innerHTML = `<div class="widget-empty">${message}</div>`;
     }
+}
+
+function buildRankingInsights() {
+    const topNegociado = (dashboardData.top_clientes || []).slice(0, 5);
+    const topComision = (dashboardData.top_clientes_comision || []).slice(0, 5);
+    const topTraders = (dashboardData.por_corredor || []).slice(0, 5);
+
+    return `
+        <div class="card-header">
+            <h3 class="card-title">Rankings clave</h3>
+        </div>
+        <div class="card-body">
+            <div class="insight-grid">
+                ${buildRankingCard(
+                    'Clientes que mas transan',
+                    'fa-chart-line',
+                    topNegociado,
+                    row => formatMoney(row.total_negociado),
+                    row => `${escapeHtml(row.nit)} · ${escapeHtml(row.corredor)}`,
+                    'insight-blue'
+                )}
+                ${buildRankingCard(
+                    'Ranking de clientes por comision generada',
+                    'fa-coins',
+                    topComision,
+                    row => formatMoney(row.total_comision),
+                    row => `${escapeHtml(row.nit)} · ${escapeHtml(row.corredor)}`,
+                    'insight-red'
+                )}
+                ${buildRankingCard(
+                    'Mejores traders',
+                    'fa-user-tie',
+                    topTraders,
+                    row => formatMoney(row.total_margen),
+                    row => `${formatNumberValue(row.total_clientes)} clientes`,
+                    'insight-green'
+                )}
+            </div>
+        </div>
+    `;
+}
+
+function buildRankingCard(title, icon, rows, valueFormatter, metaFormatter, className) {
+    const body = rows.length ? rows.map((row, index) => `
+        <div class="insight-item">
+            <div>
+                <div class="insight-name">
+                    <span class="insight-rank">${index + 1}</span>
+                    ${escapeHtml(row.cliente || row.corredor)}
+                </div>
+                <div class="insight-meta">${metaFormatter(row)}</div>
+            </div>
+            <div class="insight-value">${valueFormatter(row)}</div>
+        </div>
+    `).join('') : `
+        <div class="insight-empty">No hay datos disponibles</div>
+    `;
+
+    return `
+        <div class="insight-card ${className}">
+            <div class="insight-header">
+                <i class="fas ${icon}"></i>
+                <span>${title}</span>
+            </div>
+            <div class="insight-list">${body}</div>
+        </div>
+    `;
 }
 
 function buildResumenMensualTable() {
@@ -705,6 +927,12 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 </script>
 JS;
+
+$additionalJS = str_replace(
+    ['__DASHBOARD_JSON__', '__LAYOUT_JSON__', '__DEFAULT_LAYOUT_JSON__', '__CURRENT_YEAR__'],
+    [$dashboardJson, $layoutJson, $defaultLayoutJson, (string) (int) $year],
+    $additionalJS
+);
 
 $content = ob_get_clean();
 require __DIR__ . '/../layouts/app.php';

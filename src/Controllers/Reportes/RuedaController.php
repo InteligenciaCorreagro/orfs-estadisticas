@@ -13,6 +13,11 @@ use App\Models\Trader;
 class RuedaController
 {
     private RuedaReporteService $ruedaService;
+
+    private function getCorredorFiltro(): array|string|null
+    {
+        return getTraderCorredoresFromSession();
+    }
     
     public function __construct()
     {
@@ -44,8 +49,9 @@ class RuedaController
     public function getRuedasDelAño(Request $request): void
     {
         $year = (int) $request->get('year', date('Y'));
-        
-        $data = $this->ruedaService->obtenerRuedasDelAño($year);
+        $corredor = $this->getCorredorFiltro();
+
+        $data = $this->ruedaService->obtenerRuedasDelAño($year, $corredor);
         
         $response = new Response();
         $response->success('Ruedas obtenidas', $data);
@@ -57,8 +63,9 @@ class RuedaController
     public function getDetalleRueda(Request $request, int $ruedaNo): void
     {
         $year = (int) $request->get('year', date('Y'));
-        
-        $data = $this->ruedaService->obtenerDetalleRueda($ruedaNo, $year);
+        $corredor = $this->getCorredorFiltro();
+
+        $data = $this->ruedaService->obtenerDetalleRueda($ruedaNo, $year, $corredor);
         
         $response = new Response();
         $response->success('Detalle de rueda obtenido', $data);
@@ -70,8 +77,9 @@ class RuedaController
     public function getResumenPorCiudad(Request $request, int $ruedaNo): void
     {
         $year = (int) $request->get('year', date('Y'));
-        
-        $data = $this->ruedaService->obtenerResumenPorCiudad($ruedaNo, $year);
+        $corredor = $this->getCorredorFiltro();
+
+        $data = $this->ruedaService->obtenerResumenPorCiudad($ruedaNo, $year, $corredor);
         
         $response = new Response();
         $response->success('Resumen por ciudad obtenido', $data);
@@ -83,8 +91,9 @@ class RuedaController
     public function getResumenPorCorredor(Request $request, int $ruedaNo): void
     {
         $year = (int) $request->get('year', date('Y'));
-        
-        $data = $this->ruedaService->obtenerResumenPorCorredor($ruedaNo, $year);
+        $corredor = $this->getCorredorFiltro();
+
+        $data = $this->ruedaService->obtenerResumenPorCorredor($ruedaNo, $year, $corredor);
         
         $response = new Response();
         $response->success('Resumen por corredor obtenido', $data);
@@ -96,8 +105,9 @@ class RuedaController
     public function getEstadisticas(Request $request, int $ruedaNo): void
     {
         $year = (int) $request->get('year', date('Y'));
-        
-        $data = $this->ruedaService->obtenerEstadisticasRueda($ruedaNo, $year);
+        $corredor = $this->getCorredorFiltro();
+
+        $data = $this->ruedaService->obtenerEstadisticasRueda($ruedaNo, $year, $corredor);
         
         $response = new Response();
         $response->success('Estadísticas de rueda obtenidas', $data);
@@ -118,8 +128,9 @@ class RuedaController
         }
         
         $ruedas = array_map('intval', explode(',', $ruedasStr));
-        
-        $data = $this->ruedaService->compararRuedas($ruedas, $year);
+        $corredor = $this->getCorredorFiltro();
+
+        $data = $this->ruedaService->compararRuedas($ruedas, $year, $corredor);
         
         $response = new Response();
         $response->success('Comparación de ruedas obtenida', $data);
@@ -131,9 +142,10 @@ class RuedaController
     public function exportarRueda(Request $request, int $ruedaNo): void
     {
         $year = (int) $request->get('year', date('Y'));
-        
-        $data = $this->ruedaService->obtenerDetalleRueda($ruedaNo, $year);
-        $estadisticas = $this->ruedaService->obtenerEstadisticasRueda($ruedaNo, $year);
+        $corredor = $this->getCorredorFiltro();
+
+        $data = $this->ruedaService->obtenerDetalleRueda($ruedaNo, $year, $corredor);
+        $estadisticas = $this->ruedaService->obtenerEstadisticasRueda($ruedaNo, $year, $corredor);
         
         // Preparar datos para Excel
         $headers = [
