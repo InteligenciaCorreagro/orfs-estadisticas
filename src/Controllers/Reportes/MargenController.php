@@ -56,8 +56,9 @@ class MargenController
         $traderName = Session::get('trader_name');
         
         $corredor = $userRole === 'trader' ? $traderName : $request->get('corredor');
+        $corredorFiltro = $userRole === 'trader' ? getTraderCorredoresFromSession() : $corredor;
         
-        $data = $this->margenService->obtenerReporteMargen($year, $corredor);
+        $data = $this->margenService->obtenerReporteMargen($year, $corredorFiltro);
         
         $response = new Response();
         $response->success('Reporte de margen obtenido', $data);
@@ -87,8 +88,9 @@ class MargenController
         $traderName = Session::get('trader_name');
         
         $corredor = $userRole === 'trader' ? $traderName : $request->get('corredor');
+        $corredorFiltro = $userRole === 'trader' ? getTraderCorredoresFromSession() : $corredor;
         
-        $data = $this->margenService->obtenerRentabilidadPorCliente($year, $corredor);
+        $data = $this->margenService->obtenerRentabilidadPorCliente($year, $corredorFiltro);
         
         $response = new Response();
         $response->success('Rentabilidad por cliente obtenida', $data);
@@ -104,8 +106,9 @@ class MargenController
         $traderName = Session::get('trader_name');
         
         $corredor = $userRole === 'trader' ? $traderName : $request->get('corredor');
+        $corredorFiltro = $userRole === 'trader' ? getTraderCorredoresFromSession() : $corredor;
         
-        $data = $this->margenService->obtenerReporteMargen($year, $corredor);
+        $data = $this->margenService->obtenerReporteMargen($year, $corredorFiltro);
         
         // Preparar datos para Excel
         $headers = [

@@ -10,7 +10,7 @@ class MargenReporteService
     /**
      * Obtener reporte de margen por corredor y cliente con datos mensuales
      */
-    public function obtenerReporteMargen(int $year, ?string $corredor = null): array
+    public function obtenerReporteMargen(int $year, array|string|null $corredor = null): array
     {
         $sql = "
             SELECT 
@@ -74,11 +74,7 @@ class MargenReporteService
         ";
         
         $params = ['year' => $year];
-        
-        if ($corredor) {
-            $sql .= " AND corredor = :corredor";
-            $params['corredor'] = $corredor;
-        }
+        $sql = $this->appendCorredorFilter($sql, $corredor, $params);
         
         $sql .= " GROUP BY corredor, nit, nombre ORDER BY corredor, nombre";
         
@@ -116,7 +112,7 @@ class MargenReporteService
     /**
      * Obtener análisis de rentabilidad por cliente
      */
-    public function obtenerRentabilidadPorCliente(int $year, ?string $corredor = null): array
+    public function obtenerRentabilidadPorCliente(int $year, array|string|null $corredor = null): array
     {
         $sql = "
             SELECT 
@@ -134,16 +130,43 @@ class MargenReporteService
         ";
         
         $params = ['year' => $year];
-        
-        if ($corredor) {
-            $sql .= " AND corredor = :corredor";
-            $params['corredor'] = $corredor;
-        }
+        $sql = $this->appendCorredorFilter($sql, $corredor, $params);
         
         $sql .= " GROUP BY corredor, nit, nombre 
                   HAVING total_margen > 0
                   ORDER BY total_margen DESC";
         
         return Database::fetchAll($sql, $params);
+    }
+
+    private function appendCorredorFilter(string $sql, array|string|null $corredor, array &$params): string
+    {
+        if (!$corredor) {
+            return $sql;
+        }
+
+        if (is_array($corredor)) {
+            $placeholders = [];
+            $index = 0;
+            foreach ($corredor as $nombre) {
+                $nombre = trim((string) $nombre);
+                if ($nombre === '') {
+                    continue;
+                }
+                $key = 'corredor' . $index;
+                $placeholders[] = 'LOWER(TRIM(:' . $key . '))';
+                $params[$key] = $nombre;
+                $index++;
+            }
+
+            if (!$placeholders) {
+                return $sql;
+            }
+
+            return $sql . ' AND LOWER(TRIM(corredor)) IN (' . implode(',', $placeholders) . ')';
+        }
+
+        $params['corredor'] = trim((string) $corredor);
+        return $sql . ' AND LOWER(TRIM(corredor)) = LOWER(TRIM(:corredor))';
     }
 }

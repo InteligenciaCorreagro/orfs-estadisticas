@@ -10,7 +10,7 @@ class OrfsReporteService
     /**
      * Obtener reporte ORFS agrupado por corredor, cliente y mes
      */
-    public function obtenerReporteOrfs(int $year, ?string $corredor = null): array
+    public function obtenerReporteOrfs(int $year, array|string|null $corredor = null): array
     {
         $sql = "
             SELECT 
@@ -35,11 +35,7 @@ class OrfsReporteService
         ";
         
         $params = ['year' => $year];
-        
-        if ($corredor) {
-            $sql .= " AND corredor = :corredor";
-            $params['corredor'] = $corredor;
-        }
+        $sql = $this->appendCorredorFilter($sql, $corredor, $params);
         
         $sql .= " GROUP BY corredor, nit, nombre ORDER BY corredor, nombre";
         
@@ -49,7 +45,7 @@ class OrfsReporteService
     /**
      * Obtener totales por corredor
      */
-    public function obtenerTotalesPorCorredor(int $year): array
+    public function obtenerTotalesPorCorredor(int $year, array|string|null $corredor = null): array
     {
         $sql = "
             SELECT 
@@ -60,17 +56,20 @@ class OrfsReporteService
                 SUM(comi_corr) AS total_comision
             FROM orfs_transactions
             WHERE year = :year
-            GROUP BY corredor
-            ORDER BY total_negociado DESC
         ";
-        
-        return Database::fetchAll($sql, ['year' => $year]);
+
+        $params = ['year' => $year];
+        $sql = $this->appendCorredorFilter($sql, $corredor, $params);
+        $sql .= " GROUP BY corredor
+            ORDER BY total_negociado DESC";
+
+        return Database::fetchAll($sql, $params);
     }
     
     /**
      * Obtener resumen por mes
      */
-    public function obtenerResumenPorMes(int $year, ?string $corredor = null): array
+    public function obtenerResumenPorMes(int $year, array|string|null $corredor = null): array
     {
         $sql = "
             SELECT 
@@ -84,11 +83,7 @@ class OrfsReporteService
         ";
         
         $params = ['year' => $year];
-        
-        if ($corredor) {
-            $sql .= " AND corredor = :corredor";
-            $params['corredor'] = $corredor;
-        }
+        $sql = $this->appendCorredorFilter($sql, $corredor, $params);
         
         $sql .= " GROUP BY mes ORDER BY 
             FIELD(mes, 'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 
@@ -101,7 +96,7 @@ class OrfsReporteService
     /**
      * Obtener estadísticas generales
      */
-    public function obtenerEstadisticasGenerales(int $year, ?string $corredor = null): array
+    public function obtenerEstadisticasGenerales(int $year, array|string|null $corredor = null): array
     {
         $sql = "
             SELECT 
@@ -119,11 +114,7 @@ class OrfsReporteService
         ";
         
         $params = ['year' => $year];
-        
-        if ($corredor) {
-            $sql .= " AND corredor = :corredor";
-            $params['corredor'] = $corredor;
-        }
+        $sql = $this->appendCorredorFilter($sql, $corredor, $params);
         
         $result = Database::fetch($sql, $params);
         
@@ -133,7 +124,7 @@ class OrfsReporteService
     /**
      * Comparar año actual vs año anterior
      */
-    public function compararConAñoAnterior(int $year, ?string $corredor = null): array
+    public function compararConAñoAnterior(int $year, array|string|null $corredor = null): array
     {
         $sql = "
             SELECT 
@@ -149,11 +140,8 @@ class OrfsReporteService
             'year_actual' => $year,
             'year_anterior' => $year - 1
         ];
-        
-        if ($corredor) {
-            $sql .= " AND corredor = :corredor";
-            $params['corredor'] = $corredor;
-        }
+
+        $sql = $this->appendCorredorFilter($sql, $corredor, $params);
         
         $sql .= " GROUP BY year ORDER BY year DESC";
         
@@ -197,5 +185,115 @@ class OrfsReporteService
         }
         
         return $comparacion;
+    }
+
+    /**
+     * Top clientes por indicador
+     */
+    public function obtenerTopClientes(int $year, array|string|null $corredor = null, string $orden = 'negociado', int $limit = 5): array
+    {
+        $ordenesPermitidos = [
+            'negociado' => 'total_negociado',
+            'comision' => 'total_comision',
+            'transacciones' => 'total_transacciones'
+        ];
+        $ordenColumna = $ordenesPermitidos[$orden] ?? $ordenesPermitidos['negociado'];
+
+        $sql = "
+            SELECT 
+                nit,
+                nombre AS cliente,
+                corredor,
+                COUNT(*) AS total_transacciones,
+                SUM(negociado) AS total_negociado,
+                SUM(comi_corr) AS total_comision
+            FROM orfs_transactions
+            WHERE year = :year
+        ";
+
+        $params = ['year' => $year];
+        $sql = $this->appendCorredorFilter($sql, $corredor, $params);
+        $sql .= " GROUP BY nit, nombre, corredor
+                  ORDER BY {$ordenColumna} DESC
+                  LIMIT :limit";
+
+        $stmt = Database::getInstance()->prepare($sql);
+        foreach ($params as $key => $value) {
+            $type = is_int($value) ? \PDO::PARAM_INT : \PDO::PARAM_STR;
+            $stmt->bindValue(':' . $key, $value, $type);
+        }
+        $stmt->bindValue(':limit', $limit, \PDO::PARAM_INT);
+        $stmt->execute();
+
+        return $stmt->fetchAll();
+    }
+
+    /**
+     * Top clientes del mes con conteo de transacciones
+     */
+    public function obtenerTopClientesPorMes(int $year, string $mes, array|string|null $corredor = null, int $limit = 10): array
+    {
+        $sql = "
+            SELECT 
+                nit,
+                nombre AS cliente,
+                corredor,
+                COUNT(*) AS total_transacciones,
+                SUM(negociado) AS total_negociado,
+                SUM(comi_corr) AS total_comision
+            FROM orfs_transactions
+            WHERE year = :year
+              AND mes = :mes
+        ";
+
+        $params = [
+            'year' => $year,
+            'mes' => $mes
+        ];
+        $sql = $this->appendCorredorFilter($sql, $corredor, $params);
+        $sql .= " GROUP BY nit, nombre, corredor
+                  ORDER BY total_transacciones DESC, total_negociado DESC
+                  LIMIT :limit";
+
+        $stmt = Database::getInstance()->prepare($sql);
+        foreach ($params as $key => $value) {
+            $type = is_int($value) ? \PDO::PARAM_INT : \PDO::PARAM_STR;
+            $stmt->bindValue(':' . $key, $value, $type);
+        }
+        $stmt->bindValue(':limit', $limit, \PDO::PARAM_INT);
+        $stmt->execute();
+
+        return $stmt->fetchAll();
+    }
+
+    private function appendCorredorFilter(string $sql, array|string|null $corredor, array &$params): string
+    {
+        if (!$corredor) {
+            return $sql;
+        }
+
+        if (is_array($corredor)) {
+            $placeholders = [];
+            $index = 0;
+            foreach ($corredor as $nombre) {
+                $nombre = trim((string) $nombre);
+                if ($nombre === '') {
+                    continue;
+                }
+                $key = 'corredor' . $index;
+                $placeholders[] = 'LOWER(TRIM(:' . $key . '))';
+                $params[$key] = $nombre;
+                $index++;
+            }
+
+            if (!$placeholders) {
+                return $sql;
+            }
+
+            return $sql . ' AND LOWER(TRIM(corredor)) IN (' . implode(',', $placeholders) . ')';
+        }
+
+        $params['corredor'] = trim((string) $corredor);
+        return $sql . ' AND LOWER(TRIM(corredor)) = LOWER(TRIM(:corredor))';
     }
 }

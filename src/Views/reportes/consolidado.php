@@ -73,7 +73,7 @@ function renderDashboard(data) {
         <div class="row mb-3" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
             <div class="card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
                 <div class="card-body">
-                    <h3 style="margin: 0; font-size: 14px; opacity: 0.9;">Total Transacciones</h3>
+                    <h3 style="margin: 0; font-size: 14px; opacity: 0.9;">Total Registrado</h3>
                     <p style="margin: 10px 0 0 0; font-size: 32px; font-weight: bold;">
                         ${formatNumber(kpis.total_transacciones || 0, 0)}
                     </p>

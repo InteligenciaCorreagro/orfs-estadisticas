@@ -34,14 +34,28 @@ class MiEstadisticaController
         Session::start();
         $userName = Session::get('user_name');
         $traderName = Session::get('trader_name');
+        $corredores = getTraderCorredoresFromSession();
         
         $year = $request->get('year', date('Y'));
         
         // Obtener estadísticas personales
-        $estadisticas = $this->orfsService->obtenerEstadisticasGenerales($year, $traderName);
-        $resumenMensual = $this->orfsService->obtenerResumenPorMes($year, $traderName);
-        $comparacion = $this->orfsService->compararConAñoAnterior($year, $traderName);
+        $estadisticas = $this->orfsService->obtenerEstadisticasGenerales($year, $corredores);
+        $resumenMensual = $this->orfsService->obtenerResumenPorMes($year, $corredores);
+        $comparacion = $this->orfsService->compararConAñoAnterior($year, $corredores);
         
+        $topClientesNegociado = $this->orfsService->obtenerTopClientes($year, $corredores, 'negociado', 5);
+        $topClientesComision = $this->orfsService->obtenerTopClientes($year, $corredores, 'comision', 5);
+
+        $mesTopClientes = null;
+        $topClientesMes = [];
+        if (!empty($resumenMensual)) {
+            $ultimoMes = end($resumenMensual);
+            $mesTopClientes = $ultimoMes['mes'] ?? null;
+        }
+        if ($mesTopClientes) {
+            $topClientesMes = $this->orfsService->obtenerTopClientesPorMes($year, $mesTopClientes, $corredores, 10);
+        }
+
         ob_start();
         require __DIR__ . '/../../Views/trader/dashboard.php';
         $content = ob_get_clean();
@@ -74,12 +88,12 @@ class MiEstadisticaController
      */
     public function getEstadisticas(Request $request): void
     {
-        $traderName = Session::get('trader_name');
+        $corredores = getTraderCorredoresFromSession();
         $year = (int) $request->get('year', date('Y'));
         
-        $estadisticas = $this->orfsService->obtenerEstadisticasGenerales($year, $traderName);
-        $resumenMensual = $this->orfsService->obtenerResumenPorMes($year, $traderName);
-        $comparacion = $this->orfsService->compararConAñoAnterior($year, $traderName);
+        $estadisticas = $this->orfsService->obtenerEstadisticasGenerales($year, $corredores);
+        $resumenMensual = $this->orfsService->obtenerResumenPorMes($year, $corredores);
+        $comparacion = $this->orfsService->compararConAñoAnterior($year, $corredores);
         
         $data = [
             'estadisticas' => $estadisticas,
@@ -96,10 +110,10 @@ class MiEstadisticaController
      */
     public function getMisClientes(Request $request): void
     {
-        $traderName = Session::get('trader_name');
+        $corredores = getTraderCorredoresFromSession();
         $year = (int) $request->get('year', date('Y'));
         
-        $data = $this->orfsService->obtenerReporteOrfs($year, $traderName);
+        $data = $this->orfsService->obtenerReporteOrfs($year, $corredores);
         
         $response = new Response();
         $response->success('Clientes obtenidos', $data);
@@ -110,10 +124,10 @@ class MiEstadisticaController
      */
     public function getMiRentabilidad(Request $request): void
     {
-        $traderName = Session::get('trader_name');
+        $corredores = getTraderCorredoresFromSession();
         $year = (int) $request->get('year', date('Y'));
         
-        $data = $this->margenService->obtenerRentabilidadPorCliente($year, $traderName);
+        $data = $this->margenService->obtenerRentabilidadPorCliente($year, $corredores);
         
         $response = new Response();
         $response->success('Rentabilidad obtenida', $data);

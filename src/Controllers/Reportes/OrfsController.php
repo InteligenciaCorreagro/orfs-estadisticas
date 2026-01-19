@@ -56,8 +56,9 @@ class OrfsController
         $traderName = Session::get('trader_name');
         
         $corredor = $userRole === 'trader' ? $traderName : $request->get('corredor');
+        $corredorFiltro = $userRole === 'trader' ? getTraderCorredoresFromSession() : $corredor;
         
-        $data = $this->orfsService->obtenerReporteOrfs($year, $corredor);
+        $data = $this->orfsService->obtenerReporteOrfs($year, $corredorFiltro);
         
         $response = new Response();
         $response->success('Reporte ORFS obtenido', $data);
@@ -69,8 +70,10 @@ class OrfsController
     public function getTotalesPorCorredor(Request $request): void
     {
         $year = (int) $request->get('year', date('Y'));
+        $userRole = Session::get('user_role');
+        $corredorFiltro = $userRole === 'trader' ? getTraderCorredoresFromSession() : null;
         
-        $data = $this->orfsService->obtenerTotalesPorCorredor($year);
+        $data = $this->orfsService->obtenerTotalesPorCorredor($year, $corredorFiltro);
         
         $response = new Response();
         $response->success('Totales por corredor obtenidos', $data);
@@ -86,8 +89,9 @@ class OrfsController
         $traderName = Session::get('trader_name');
         
         $corredor = $userRole === 'trader' ? $traderName : $request->get('corredor');
+        $corredorFiltro = $userRole === 'trader' ? getTraderCorredoresFromSession() : $corredor;
         
-        $data = $this->orfsService->obtenerResumenPorMes($year, $corredor);
+        $data = $this->orfsService->obtenerResumenPorMes($year, $corredorFiltro);
         
         $response = new Response();
         $response->success('Resumen por mes obtenido', $data);
@@ -103,8 +107,9 @@ class OrfsController
         $traderName = Session::get('trader_name');
         
         $corredor = $userRole === 'trader' ? $traderName : $request->get('corredor');
+        $corredorFiltro = $userRole === 'trader' ? getTraderCorredoresFromSession() : $corredor;
         
-        $data = $this->orfsService->obtenerEstadisticasGenerales($year, $corredor);
+        $data = $this->orfsService->obtenerEstadisticasGenerales($year, $corredorFiltro);
         
         $response = new Response();
         $response->success('Estadísticas obtenidas', $data);
@@ -120,8 +125,9 @@ class OrfsController
         $traderName = Session::get('trader_name');
         
         $corredor = $userRole === 'trader' ? $traderName : $request->get('corredor');
+        $corredorFiltro = $userRole === 'trader' ? getTraderCorredoresFromSession() : $corredor;
         
-        $data = $this->orfsService->compararConAñoAnterior($year, $corredor);
+        $data = $this->orfsService->compararConAñoAnterior($year, $corredorFiltro);
         
         $response = new Response();
         $response->success('Comparación obtenida', $data);
@@ -137,8 +143,9 @@ class OrfsController
         $traderName = Session::get('trader_name');
         
         $corredor = $userRole === 'trader' ? $traderName : $request->get('corredor');
+        $corredorFiltro = $userRole === 'trader' ? getTraderCorredoresFromSession() : $corredor;
         
-        $data = $this->orfsService->obtenerReporteOrfs($year, $corredor);
+        $data = $this->orfsService->obtenerReporteOrfs($year, $corredorFiltro);
         
         // Preparar datos para Excel
         $headers = [

@@ -18,6 +18,7 @@ class ConsolidadoService
             'por_corredor' => $this->obtenerDatosPorCorredor($year),
             'comparacion_anual' => $this->obtenerComparacionAnual($year),
             'top_clientes' => $this->obtenerTopClientes($year, 10),
+            'top_clientes_comision' => $this->obtenerTopClientesPorComision($year, 10),
             'ultimas_ruedas' => $this->obtenerUltimasRuedas($year, 5)
         ];
     }
@@ -174,6 +175,34 @@ class ConsolidadoService
             WHERE year = :year
             GROUP BY nit, nombre, corredor
             ORDER BY total_negociado DESC
+            LIMIT :limit
+        ";
+        
+        $stmt = Database::getInstance()->prepare($sql);
+        $stmt->bindValue(':year', $year, \PDO::PARAM_INT);
+        $stmt->bindValue(':limit', $limit, \PDO::PARAM_INT);
+        $stmt->execute();
+        
+        return $stmt->fetchAll();
+    }
+
+    /**
+     * Top clientes por comision
+     */
+    private function obtenerTopClientesPorComision(int $year, int $limit = 10): array
+    {
+        $sql = "
+            SELECT 
+                nit,
+                nombre AS cliente,
+                corredor,
+                SUM(negociado) AS total_negociado,
+                SUM(comi_corr) AS total_comision,
+                COUNT(*) AS total_transacciones
+            FROM orfs_transactions
+            WHERE year = :year
+            GROUP BY nit, nombre, corredor
+            ORDER BY total_comision DESC
             LIMIT :limit
         ";
         

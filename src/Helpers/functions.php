@@ -2,6 +2,7 @@
 // src/Helpers/functions.php
 
 use App\Core\Session;
+use App\Models\Trader;
 
 /**
  * Escapar HTML
@@ -133,6 +134,36 @@ function auth(): ?array
         'role' => Session::get('user_role'),
         'trader_name' => Session::get('trader_name')
     ];
+}
+
+/**
+ * Obtener lista de corredores del trader actual (incluye adicionales).
+ */
+function getTraderCorredoresFromSession(): ?array
+{
+    $role = Session::get('user_role');
+    if ($role !== 'trader') {
+        return null;
+    }
+
+    $traderName = trim((string) Session::get('trader_name'));
+    if ($traderName === '') {
+        $traderName = trim((string) Session::get('user_name'));
+    }
+
+    if ($traderName === '') {
+        return ['__SIN_CORREDOR__'];
+    }
+
+    $trader = Trader::buscarPorNombreONit($traderName);
+    if ($trader) {
+        $nombres = array_map('trim', $trader->getNombresCompletos());
+        $nombres = array_values(array_filter($nombres, static fn($nombre) => $nombre !== ''));
+        $nombres = array_values(array_unique($nombres));
+        return $nombres ?: [$traderName];
+    }
+
+    return [$traderName];
 }
 
 /**

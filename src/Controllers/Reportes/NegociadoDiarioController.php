@@ -12,6 +12,11 @@ use App\Models\Trader;
 class NegociadoDiarioController
 {
     private NegociadoDiarioService $negociadoService;
+
+    private function getCorredoresFiltro(): ?array
+    {
+        return getTraderCorredoresFromSession();
+    }
     
     public function __construct()
     {
@@ -55,8 +60,9 @@ class NegociadoDiarioController
         $traderName = Session::get('trader_name');
         
         $corredor = $userRole === 'trader' ? $traderName : $request->get('corredor');
+        $corredorFiltro = $userRole === 'trader' ? $this->getCorredoresFiltro() : $corredor;
         
-        $data = $this->negociadoService->obtenerNegociadosPorCliente($year, $corredor);
+        $data = $this->negociadoService->obtenerNegociadosPorCliente($year, $corredorFiltro);
         
         $response = new Response();
         $response->success('Negociados diarios obtenidos', $data);
@@ -97,10 +103,12 @@ class NegociadoDiarioController
         $year = (int) $request->get('year', date('Y'));
         $userRole = Session::get('user_role');
         $traderName = Session::get('trader_name');
+        $corredores = $this->getCorredoresFiltro();
 
         $corredor = $userRole === 'trader' ? $traderName : $request->get('corredor');
+        $corredorFiltro = $userRole === 'trader' ? $corredores : $corredor;
 
-        $resultado = $this->negociadoService->obtenerNegociadosPorCliente($year, $corredor);
+        $resultado = $this->negociadoService->obtenerNegociadosPorCliente($year, $corredorFiltro);
 
         $ruedas = $resultado['ruedas'];
         $data = $resultado['data'];
@@ -148,10 +156,10 @@ class NegociadoDiarioController
     {
         $year = (int) $request->get('year', date('Y'));
         $userRole = Session::get('user_role');
-        $traderName = Session::get('trader_name');
+        $corredores = $this->getCorredoresFiltro();
 
         // Si es trader, solo puede ver su propia información
-        $corredor = $userRole === 'trader' ? $traderName : null;
+        $corredor = $userRole === 'trader' ? $corredores : null;
 
         $data = $this->negociadoService->obtenerResumenPorTrader($year, $corredor);
 
@@ -166,16 +174,17 @@ class NegociadoDiarioController
     {
         $year = (int) $request->get('year', date('Y'));
         $userRole = Session::get('user_role');
-        $traderName = Session::get('trader_name');
+        $corredores = $this->getCorredoresFiltro();
 
         // Si es trader, solo puede ver su propia información
-        if ($userRole === 'trader' && $trader !== $traderName) {
+        if ($userRole === 'trader' && (!$corredores || !in_array($trader, $corredores, true))) {
             $response = new Response();
             $response->error('No autorizado para ver información de otro trader', [], 403);
             return;
         }
 
-        $data = $this->negociadoService->obtenerDetalleMensualPorTrader($year, $trader);
+        $corredorFiltro = $userRole === 'trader' ? $corredores : $trader;
+        $data = $this->negociadoService->obtenerDetalleMensualPorTrader($year, $corredorFiltro);
 
         $response = new Response();
         $response->success('Detalle mensual del trader obtenido', $data);
@@ -187,15 +196,11 @@ class NegociadoDiarioController
     public function getVistaMatricial(Request $request): void
     {
         $year = (int) $request->get('year', date('Y'));
-        $userRole = Session::get('user_role');
-        $traderName = Session::get('trader_name');
+        $corredores = $this->getCorredoresFiltro();
 
-        // Si es trader, solo puede ver su propia información
-        $corredor = $userRole === 'trader' ? $traderName : null;
-
-        $data = $this->negociadoService->obtenerVistaMatricialNegociados($year, $corredor);
-
+        $data = $this->negociadoService->obtenerVistaMatricialNegociados($year, $corredores);
         $response = new Response();
         $response->success('Vista matricial obtenida', $data);
     }
 }
+
