@@ -43,6 +43,11 @@ $pageSubtitle = $pageSubtitle ?? 'Benchmark competitivo';
                 </a>
             </li>
             <li class="nav-item">
+                <a class="nav-link <?= $currentPage === 'productos' ? 'active' : '' ?>" href="/bi/benchmark/productos">
+                    <i class="fas fa-boxes-stacked me-1"></i> Productos
+                </a>
+            </li>
+            <li class="nav-item">
                 <a class="nav-link <?= $currentPage === 'reportes' ? 'active' : '' ?>" href="/bi/benchmark/reportes">
                     <i class="fas fa-file-export me-1"></i> Reportes
                 </a>

@@ -21,6 +21,7 @@ Router::get('/bi/benchmark/comparativa', [BenchmarkController::class, 'comparati
 Router::get('/bi/benchmark/sectores', [BenchmarkController::class, 'sectores'], $biMiddleware);
 Router::get('/bi/benchmark/temporal', [BenchmarkController::class, 'temporal'], $biMiddleware);
 Router::get('/bi/benchmark/reportes', [BenchmarkController::class, 'reportes'], $biMiddleware);
+Router::get('/bi/benchmark/productos', [BenchmarkController::class, 'productos'], $biMiddleware);
 
 // Internal API proxy
 Router::get('/api/bi/benchmark/summary', [BenchmarkController::class, 'summary'], $biMiddleware);
@@ -30,6 +31,11 @@ Router::get('/api/bi/benchmark/compare', [BenchmarkController::class, 'compare']
 Router::get('/api/bi/benchmark/trends/scb', [BenchmarkController::class, 'trendsScb'], $biMiddleware);
 Router::get('/api/bi/benchmark/trends/sectores', [BenchmarkController::class, 'trendsSectores'], $biMiddleware);
 Router::post('/api/bi/benchmark/analyze', [BenchmarkController::class, 'analyze'], $biMiddleware);
+Router::get('/api/bi/benchmark/products', [BenchmarkController::class, 'products'], $biMiddleware);
+Router::get('/api/bi/benchmark/products/periods', [BenchmarkController::class, 'productPeriods'], $biMiddleware);
+Router::get('/api/bi/benchmark/products/monthly', [BenchmarkController::class, 'productsMonthly'], $biMiddleware);
+Router::get('/api/bi/benchmark/analysis', [BenchmarkController::class, 'analysis'], $biMiddleware);
+Router::get('/api/bi/benchmark/analysis/periods', [BenchmarkController::class, 'analysisPeriods'], $biMiddleware);
 
 Router::get('/api/bi/benchmark/export/csv', [BenchmarkController::class, 'exportCsv'], $biMiddleware);
 Router::get('/api/bi/benchmark/export/pdf', [BenchmarkController::class, 'exportPdf'], $biMiddleware);

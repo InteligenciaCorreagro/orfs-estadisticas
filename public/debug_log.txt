@@ -25738,3 +25738,26 @@ Valores:
     "updated_at": "2026-01-16 16:29:23"
 }
 ✓ INSERT EXITOSO! ID: 81
+
+
+=== DATABASE INSERT CALLED ===
+Tabla: auditoria_logs
+Datos originales (keys): user_id, accion, modulo, descripcion, datos_anteriores, datos_nuevos, ip_address, user_agent, created_at, updated_at
+Total campos: 10
+SQL: INSERT INTO auditoria_logs (user_id, accion, modulo, descripcion, datos_anteriores, datos_nuevos, ip_address, user_agent, created_at, updated_at) VALUES (:user_id, :accion, :modulo, :descripcion, :datos_anteriores, :datos_nuevos, :ip_address, :user_agent, :created_at, :updated_at)
+Campos limpios (10): user_id, accion, modulo, descripcion, datos_anteriores, datos_nuevos, ip_address, user_agent, created_at, updated_at
+Placeholders: :user_id, :accion, :modulo, :descripcion, :datos_anteriores, :datos_nuevos, :ip_address, :user_agent, :created_at, :updated_at
+Valores:
+{
+    "user_id": 1,
+    "accion": "login",
+    "modulo": "auth",
+    "descripcion": "Usuario inició sesión",
+    "datos_anteriores": null,
+    "datos_nuevos": null,
+    "ip_address": "127.0.0.1",
+    "user_agent": "Mozilla\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\/537.36 (KHTML, like Gecko) Chrome\/144.0.0.0 Safari\/537.36",
+    "created_at": "2026-01-26 20:51:29",
+    "updated_at": "2026-01-26 20:51:29"
+}
+✓ INSERT EXITOSO! ID: 15

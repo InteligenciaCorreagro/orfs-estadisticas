@@ -11,17 +11,27 @@ class BMCApiClient
     private string $baseUrl;
     private int $timeout;
     private int $connectTimeout;
+    private int $analyzeTimeout;
+    private int $analyzeConnectTimeout;
 
     /**
      * @param string|null $baseUrl
      * @param int $timeout
      * @param int $connectTimeout
      */
-    public function __construct(?string $baseUrl = null, int $timeout = 20, int $connectTimeout = 6)
+    public function __construct(
+        ?string $baseUrl = null,
+        int $timeout = 20,
+        int $connectTimeout = 6,
+        ?int $analyzeTimeout = null,
+        ?int $analyzeConnectTimeout = null
+    )
     {
         $this->baseUrl = $baseUrl ?? env('BMC_API_BASE', 'http://localhost:7000');
         $this->timeout = $timeout;
         $this->connectTimeout = $connectTimeout;
+        $this->analyzeTimeout = $analyzeTimeout ?? (int) env('BMC_API_ANALYZE_TIMEOUT', 300);
+        $this->analyzeConnectTimeout = $analyzeConnectTimeout ?? (int) env('BMC_API_ANALYZE_CONNECT_TIMEOUT', $this->connectTimeout);
     }
 
     /**
@@ -101,11 +111,31 @@ class BMCApiClient
         $mime = mime_content_type($filePath) ?: 'application/octet-stream';
         $file = curl_file_create($filePath, $mime, $filename);
 
-        return $this->request('POST', '/api/v1/analyze', [], [
+        $analyzeBase = env('BMC_ANALYZE_BASE', env('BMC_PDF_API_BASE', $this->baseUrl));
+        $analyzePath = env('BMC_ANALYZE_PATH', '/api/v1/analyze');
+        if (!is_string($analyzePath) || trim($analyzePath) === '') {
+            $analyzePath = '/api/v1/analyze';
+        }
+
+        $result = $this->request('POST', $analyzePath, [], [
             'usuario' => $usuario
         ], [
             'file' => $file
-        ]);
+        ], $this->analyzeTimeout, $this->analyzeConnectTimeout, $analyzeBase);
+
+        if (($result['status'] ?? 0) === 404 && $analyzePath === '/api/v1/analyze') {
+            $fallback = $this->request('POST', '/analyze', [], [
+                'usuario' => $usuario
+            ], [
+                'file' => $file
+            ], $this->analyzeTimeout, $this->analyzeConnectTimeout, $analyzeBase);
+
+            if (($fallback['status'] ?? 0) !== 404) {
+                return $fallback;
+            }
+        }
+
+        return $result;
     }
 
     /**
@@ -116,10 +146,21 @@ class BMCApiClient
      * @param array $files
      * @return array
      */
-    private function request(string $method, string $path, array $query = [], array $body = [], array $files = []): array
+    private function request(
+        string $method,
+        string $path,
+        array $query = [],
+        array $body = [],
+        array $files = [],
+        ?int $timeout = null,
+        ?int $connectTimeout = null,
+        ?string $baseUrl = null
+    ): array
     {
-        $url = $this->buildUrl($path, $query);
+        $url = $this->buildUrl($path, $query, $baseUrl);
         $method = strtoupper($method);
+        $timeout = $timeout ?? $this->timeout;
+        $connectTimeout = $connectTimeout ?? $this->connectTimeout;
 
         $ch = curl_init();
         if ($ch === false) {
@@ -137,8 +178,8 @@ class BMCApiClient
         $options = [
             CURLOPT_URL => $url,
             CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_TIMEOUT => $this->timeout,
-            CURLOPT_CONNECTTIMEOUT => $this->connectTimeout,
+            CURLOPT_TIMEOUT => $timeout,
+            CURLOPT_CONNECTTIMEOUT => $connectTimeout,
             CURLOPT_CUSTOMREQUEST => $method
         ];
 
@@ -211,10 +252,10 @@ class BMCApiClient
      * @param array $query
      * @return string
      */
-    private function buildUrl(string $path, array $query = []): string
+    private function buildUrl(string $path, array $query = [], ?string $baseUrl = null): string
     {
         $path = '/' . ltrim($path, '/');
-        $base = rtrim($this->baseUrl, '/');
+        $base = rtrim($baseUrl ?? $this->baseUrl, '/');
         $queryString = $this->buildQuery($query);
 
         return $base . $path . $queryString;
